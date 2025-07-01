@@ -1,0 +1,48 @@
+{
+  "name": "@credo-ts/indy-besu-vdr",
+  "main": "src/index",
+  "types": "src/index",
+  "version": "0.0.1",
+  "files": [
+    "build"
+  ],
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "main": "build/index",
+    "types": "build/index",
+    "access": "public"
+  },
+  "homepage": "https://github.com/openwallet-foundation/credo-ts/tree/main/packages/indy-besu-vdr",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openwallet-foundation/credo-ts",
+    "directory": "packages/indy-besu-vdr"
+  },
+  "scripts": {
+    "build": "pnpm run clean && pnpm run compile",
+    "clean": "rimraf ./build",
+    "compile": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "pnpm run build",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@credo-ts/anoncreds": "workspace:*",
+    "@credo-ts/askar": "workspace:*",
+    "@credo-ts/core": "workspace:*",
+    "class-validator": "catalog:",
+    "ethers": "^6.8.1",
+    "indy2-vdr": "file:vdr-pkg"
+  },
+  "devDependencies": {
+    "@stablelib/ed25519": "^1.0.2",
+    "@types/ref-array-di": "^1.2.6",
+    "@types/ref-struct-di": "^1.1.10",
+    "jest": "^29.0.0",
+    "rimraf": "^6.0.1",
+    "rxjs": "^7.8.2",
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "@hyperledger/indy-vdr-shared": "catalog:"
+  }
+}
