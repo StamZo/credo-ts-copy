@@ -8,9 +8,16 @@ const config: Config.InitialOptions = {
   setupFilesAfterEnv: ['./tests/setup.ts'],
   transform: {
     '^.+\\.(ts|tsx)$': 'ts-jest',
-    '^.+\\.(js|jsx)$': 'babel-jest', // <-- THIS IS IMPORTANT!
+    '^.+\\.(js|jsx)$': 'babel-jest',
   },
   transformIgnorePatterns: [],
+  testMatch: [
+    '**/tests/**/*.test.ts',
+  ],
+  // Add environment variable to run e2e tests
+  ...(process.env.RUN_E2E_TESTS === 'true' && {
+    testMatch: ['**/tests/**/*.test.ts'],
+  }),
 }
 
 export default config

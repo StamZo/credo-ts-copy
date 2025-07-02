@@ -1,5 +1,5 @@
 import {
-  type Buffer,
+  Buffer,
   DidCreateResult,
   TypedArrayEncoder,
   VerificationMethod,
@@ -37,29 +37,56 @@ export interface IndyBesuEndpoint {
   endpoint: string
 }
 
-export function buildDid(method: string, key: Buffer): string {
-  const namespaceIdentifier = computeAddress(`0x${TypedArrayEncoder.toHex(key)}`)
-
-  return `did:${method}:${namespaceIdentifier}`
+export function buildDid(method: string, key: Buffer | Uint8Array): string {
+  // For 'ethr' method, we use the Ethereum address as the identifier
+  let keyHex: string
+  
+  if (Buffer.isBuffer(key)) {
+    keyHex = TypedArrayEncoder.toHex(key)
+  } else if (key instanceof Uint8Array) {
+    keyHex = Buffer.from(key).toString('hex')
+  } else {
+    throw new Error('Key must be a Buffer or Uint8Array')
+  }
+  
+  const address = computeAddress(`0x${keyHex}`)
+  
+  // Remove '0x' prefix and use the address as identifier
+  const identifier = address.slice(2).toLowerCase()
+  
+  return `did:${method}:${identifier}`
 }
 
 export function getEcdsaSecp256k1RecoveryMethod2020({
   id,
   key,
   controller,
+  chainId = 1337 // Default chain ID, should be configurable
 }: {
   id: string
   key: any
   controller: string
+  chainId?: number
 }) {
-  const address = computeAddress(`0x${TypedArrayEncoder.toHex(key.publicKey)}`)
+  // Handle both Buffer and object with publicKey property
+  const publicKeyBuffer = key.publicKey || key
+  let keyHex: string
+  
+  if (Buffer.isBuffer(publicKeyBuffer)) {
+    keyHex = TypedArrayEncoder.toHex(publicKeyBuffer)
+  } else if (publicKeyBuffer instanceof Uint8Array) {
+    keyHex = Buffer.from(publicKeyBuffer).toString('hex')
+  } else {
+    throw new Error('Public key must be a Buffer or Uint8Array')
+  }
+  
+  const address = computeAddress(`0x${keyHex}`)
 
-  //TODO: Replace hardcoded chain ID 1337, it should be extracted from configurations
   return new VerificationMethod({
     id,
     type: 'EcdsaSecp256k1RecoveryMethod2020',
     controller,
-    blockchainAccountId: `eip155:1337:${address}`,
+    blockchainAccountId: `eip155:${chainId}:${address}`,
   })
 }
 
@@ -90,9 +117,19 @@ export function getVerificationMaterial(type: VerificationKeyType, key: any): st
     case VerificationKeyType.X25519KeyAgreementKey2020:
       return key.publicKeyBase58
     case VerificationKeyType.EcdsaSecp256k1RecoveryMethod2020:
-      const address = computeAddress(`0x${TypedArrayEncoder.toHex(key.publicKey)}`)
-      //TODO: Replace hardcoded chain ID 1337, it should be extracted from configurations
-      return `eip155:1337:${address}`
+      const publicKeyBuffer = key.publicKey || key
+      let keyHex: string
+      
+      if (Buffer.isBuffer(publicKeyBuffer)) {
+        keyHex = TypedArrayEncoder.toHex(publicKeyBuffer)
+      } else if (publicKeyBuffer instanceof Uint8Array) {
+        keyHex = Buffer.from(publicKeyBuffer).toString('hex')
+      } else {
+        throw new Error('Public key must be a Buffer or Uint8Array')
+      }
+      
+      const address = computeAddress(`0x${keyHex}`)
+      return `eip155:1337:${address}` // TODO: Make chain ID configurable
   }
 }
 
@@ -143,7 +180,6 @@ export function buildDidDocument(
   const context = [
     'https://www.w3.org/ns/did/v1',
     'https://w3id.org/security/suites/secp256k1recovery-2020/v2',
-    // 'https://w3id.org/security/v3-unstable',
   ]
 
   const verificationMethod = getEcdsaSecp256k1RecoveryMethod2020({
@@ -157,7 +193,7 @@ export function buildDidDocument(
     .addAuthentication(verificationMethod.id)
     .addAssertionMethod(verificationMethod.id)
 
-  // add key security context
+  // Add key security contexts
   verificationKeys
     ?.map((value) => value.type)
     .map((value) => getKeyContext(value))
@@ -167,7 +203,7 @@ export function buildDidDocument(
       }
     })
 
-  // add verification methods
+  // Add verification methods
   verificationKeys?.forEach((value, index) => {
     const id = `${did}#delegate-${index + 1}`
 
@@ -186,7 +222,7 @@ export function buildDidDocument(
     }
   })
 
-  // add services
+  // Add services
   endpoints?.forEach((value, index) => {
     const service = new DidDocumentService({
       id: `${did}#service-${index + 1}`,
@@ -198,7 +234,6 @@ export function buildDidDocument(
   })
 
   const didDocument = didDocumentBuilder.build()
-
   didDocument.context = context
 
   return didDocument
