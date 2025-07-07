@@ -1,76 +1,36 @@
 {
-<<<<<<< HEAD
-  "name": "afj-demo",
-=======
   "name": "multi-agent-api",
->>>>>>> cea78ecd (staff ad api)
   "version": "1.0.0",
   "private": true,
-  "repository": {
-    "type": "git",
-<<<<<<< HEAD
-    "url": "https://github.com/hyperledger/aries-framework-javascript",
-    "directory": "demo/"
-  },
   "license": "Apache-2.0",
   "scripts": {
-    "alice": "ts-node src/AliceInquirer.ts",
-    "faber": "ts-node src/FaberInquirer.ts",
-    "refresh": "rm -rf ./node_modules ./yarn.lock && yarn"
+    "dev": "ts-node src/app.ts",
+    "api": "ts-node src/app.ts",
+    "start": "ts-node src/app.ts",
+    "build": "tsc",
+    "test": "jest"
   },
   "dependencies": {
-    "@hyperledger/indy-vdr-nodejs": "^0.1.0",
-    "@hyperledger/anoncreds-nodejs": "^0.1.0",
-    "@hyperledger/aries-askar-nodejs": "^0.2.0-dev.3",
-    "inquirer": "^8.2.5",
-    "ethers": "^6.8.1"
-  },
-  "devDependencies": {
-    "@aries-framework/anoncreds": "*",
-    "@aries-framework/anoncreds-rs": "*",
-    "@aries-framework/askar": "*",
-    "@aries-framework/core": "*",
-    "@aries-framework/indy-sdk": "*",
-    "@aries-framework/indy-vdr": "*",
-    "@aries-framework/cheqd": "*",
-    "@aries-framework/node": "*",
-    "@types/figlet": "^1.5.4",
-    "@types/indy-sdk": "^1.16.26",
-    "@types/inquirer": "^8.2.6",
-    "clear": "^0.1.0",
-    "figlet": "^1.5.2",
-    "ts-node": "^10.4.0"
-  }
-}
-=======
-    "url": "https://github.com/StamZo/credo-ts",
-    "directory": "demo2/"
-  },
-  "license": "Apache-2.0",
-  "scripts": {
-    "dev": "pnpm exec ts-node src/app.ts",
-    "api": "pnpm exec ts-node src/app.ts",
-    "start": "pnpm exec ts-node src/app.ts"
-  },
-  "dependencies": {
+    "@credo-ts/anoncreds": "workspace:*",
+    "@credo-ts/askar": "workspace:*",
+    "@credo-ts/core": "workspace:*",
+    "@credo-ts/didcomm": "workspace:*",
+    "@credo-ts/indy-besu-vdr": "workspace:*",
+    "@credo-ts/indy-vdr": "workspace:*",
+    "@credo-ts/node": "workspace:*",
+    "@hyperledger/anoncreds-nodejs": "^0.2.2",
+    "@hyperledger/aries-askar-nodejs": "^0.2.3",
+    "@hyperledger/indy-vdr-nodejs": "^0.2.2",
+    "@openwallet-foundation/askar-shared": "^0.3.2",
     "ethers": "^6.8.1",
     "express": "^4.18.2"
   },
   "devDependencies": {
-    "@credo-ts/anoncreds": "^0.5.15",
-    "@credo-ts/askar": "^0.5.15",
-    "@credo-ts/core": "^0.5.15",
-    "@credo-ts/indy-besu-vdr": "workspace:*",
-    "@credo-ts/indy-vdr": "^0.5.15",
-    "@credo-ts/node": "^0.5.15",
-    "@hyperledger/anoncreds-nodejs": "^0.2.2",
-    "@hyperledger/aries-askar-nodejs": "^0.2.3",
-    "@hyperledger/indy-vdr-nodejs": "^0.2.2",
     "@types/express": "^4.17.17",
+    "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
-    "ethers": "^6.8.1",
+    "jest": "^29.5.0",
     "ts-node": "^10.4.0",
     "typescript": "^5.3.3"
   }
 }
->>>>>>> cea78ecd (staff ad api)

@@ -1,11 +1,5 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
-<<<<<<< HEAD
-    "types": ["node"]
-  }
-}
-=======
     "target": "ES2022",
     "module": "commonjs",
     "lib": ["ES2022"],
@@ -16,16 +10,20 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["node"],
+    "types": ["node", "jest", "express"],
     "outDir": "./dist",
-
+    "baseUrl": "./src",
+    "paths": {
+      "@credo-ts/indy-besu-vdr": ["../../packages/indy-besu-vdr/src"],
+      "@credo-ts/indy-besu-vdr/*": ["../../packages/indy-besu-vdr/src/*"]
+    }
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "../../packages/indy-besu-vdr/src/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist"
   ]
 }
->>>>>>> cea78ecd (staff ad api)
