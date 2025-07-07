@@ -1,0 +1,1 @@
+{"version":3,"file":"didDocumentKey.js","sourceRoot":"","sources":["../../../../src/modules/dids/domain/didDocumentKey.ts"],"names":[],"mappings":";;AAGA,8EAGC;AAHD,SAAgB,iCAAiC,CAAC,kBAAsC,EAAE,IAAuB;IAC/G,OAAO,IAAI,EAAE,IAAI,CAAC,CAAC,EAAE,wBAAwB,EAAE,EAAE,EAAE,CAAC,kBAAkB,CAAC,EAAE,CAAC,QAAQ,CAAC,wBAAwB,CAAC,CAAC;QAC3G,EAAE,QAAQ,CAAA;AACd,CAAC"}

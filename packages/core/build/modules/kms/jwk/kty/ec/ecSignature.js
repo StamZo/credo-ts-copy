@@ -1,0 +1,111 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.rawEcSignatureToDer = rawEcSignatureToDer;
+exports.derEcSignatureToRaw = derEcSignatureToRaw;
+const asn1_ecc_1 = require("@peculiar/asn1-ecc");
+const asn1_schema_1 = require("@peculiar/asn1-schema");
+const KeyManagementError_1 = require("../../../error/KeyManagementError");
+const ecPublicKey_1 = require("./ecPublicKey");
+/**
+ * Converts a RAW EC signature to DER format
+ *
+ * @param rawSignature - Raw signature as r || s concatenated values
+ * @param crv - The EC crv of the key used for the signature
+ * @returns DER encoded signature
+ */
+function rawEcSignatureToDer(rawSignature, crv) {
+    const pointBitLength = ecPublicKey_1.ecCrvToCurveParams[crv].pointBitLength;
+    const pointByteLength = Math.ceil(pointBitLength / 8);
+    if (rawSignature.length !== pointByteLength * 2) {
+        throw new KeyManagementError_1.KeyManagementError(`Invalid raw signature length for EC signature conversion. Expected ${pointByteLength * 2} bytes for crv ${crv}`);
+    }
+    // Extract r and s values from the raw signature
+    const r = rawSignature.slice(0, pointByteLength);
+    const s = rawSignature.slice(pointByteLength);
+    // Remove leading zeros that aren't necessary for ASN.1 encoding
+    const rValue = removeLeadingZeros(r);
+    const sValue = removeLeadingZeros(s);
+    // Create the EcDsaSignature object
+    const signature = new asn1_ecc_1.ECDSASigValue();
+    signature.r = new Uint8Array(ensurePositive(rValue));
+    signature.s = new Uint8Array(ensurePositive(sValue));
+    // Convert to DER
+    return new Uint8Array(asn1_schema_1.AsnConvert.serialize(signature));
+}
+/**
+ * Converts a DER encoded EC signature to RAW format
+ *
+ * @param derSignature - DER encoded signature
+ * @param crv - The EC crv of the key used for the signature
+ * @returns Raw signature as r || s concatenated values
+ */
+function derEcSignatureToRaw(derSignature, crv) {
+    // Parse DER signature
+    const asn = asn1_schema_1.AsnConvert.parse(derSignature, asn1_ecc_1.ECDSASigValue);
+    const pointBitLength = ecPublicKey_1.ecCrvToCurveParams[crv].pointBitLength;
+    const pointByteLength = Math.ceil(pointBitLength / 8);
+    // Ensure r and s are padded to the correct point size
+    const rPadded = padToLength(new Uint8Array(asn.r), pointByteLength);
+    const sPadded = padToLength(new Uint8Array(asn.s), pointByteLength);
+    // Concatenate to form raw signature
+    const rawSignature = new Uint8Array(pointByteLength * 2);
+    rawSignature.set(rPadded, 0);
+    rawSignature.set(sPadded, pointByteLength);
+    return rawSignature;
+}
+/**
+ * Helper function to remove unnecessary leading zeros from an integer representation
+ *
+ * @param data - The integer bytes
+ * @returns - Data with leading zeros removed
+ */
+function removeLeadingZeros(data) {
+    let startIndex = 0;
+    while (startIndex < data.length - 1 && data[startIndex] === 0) {
+        startIndex++;
+    }
+    return data.slice(startIndex);
+}
+/**
+ * Ensures an integer value is represented as positive in ASN.1 by
+ * adding a leading zero if the high bit is set
+ *
+ * @param data - The integer bytes
+ * @returns Data ensuring positive integer representation
+ */
+function ensurePositive(data) {
+    // If high bit is set, prepend a zero byte to ensure it's treated as positive
+    if (data.length > 0 && (data[0] & 0x80) !== 0) {
+        const result = new Uint8Array(data.length + 1);
+        result.set(data, 1);
+        return result;
+    }
+    return data;
+}
+/**
+ * Pads an integer value to the specified length
+ *
+ * @param data - The integer bytes
+ * @param targetLength - The desired length
+ * @returns Padded data
+ */
+function padToLength(data, targetLength) {
+    if (data.length === targetLength) {
+        return data;
+    }
+    if (data.length > targetLength) {
+        // If the value is larger, ensure we're not losing significant bytes
+        const significantStart = data.length - targetLength;
+        for (let i = 0; i < significantStart; i++) {
+            if (data[i] !== 0) {
+                throw new KeyManagementError_1.KeyManagementError('Value too large for the specified point size');
+            }
+        }
+        return data.slice(significantStart);
+    }
+    // Pad with leading zeros
+    const result = new Uint8Array(targetLength);
+    result.set(data, targetLength - data.length);
+    return result;
+}
+//# sourceMappingURL=ecSignature.js.map

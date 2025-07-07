@@ -1,0 +1,1 @@
+{"version":3,"file":"express.js","sourceRoot":"","sources":["../../../src/shared/router/express.ts"],"names":[],"mappings":";;AAEA,sCAQC;AARD,SAAgB,aAAa;IAC3B,IAAI,CAAC;QACH,wFAAwF;QACxF,MAAM,OAAO,GAAG,OAAO,CAAC,SAAS,CAAmB,CAAA;QACpD,OAAO,OAAO,CAAA;IAChB,CAAC;IAAC,OAAO,MAAM,EAAE,CAAC;QAChB,MAAM,IAAI,KAAK,CAAC,gDAAgD,CAAC,CAAA;IACnE,CAAC;AACH,CAAC"}

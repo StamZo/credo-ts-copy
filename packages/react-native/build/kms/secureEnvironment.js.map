@@ -1,0 +1,1 @@
+{"version":3,"file":"secureEnvironment.js","sourceRoot":"","sources":["../../src/kms/secureEnvironment.ts"],"names":[],"mappings":";;AAAA,0DAcC;AAdD,SAAgB,uBAAuB;IAQrC,IAAI,CAAC;QACH,MAAM,iBAAiB,GAAG,OAAO,CAAC,mCAAmC,CAAC,CAAA;QACtE,OAAO,iBAAiB,CAAA;IAC1B,CAAC;IAAC,OAAO,MAAM,EAAE,CAAC;QAChB,MAAM,IAAI,KAAK,CAAC,0EAA0E,CAAC,CAAA;IAC7F,CAAC;AACH,CAAC"}

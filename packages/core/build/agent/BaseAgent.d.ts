@@ -1,0 +1,33 @@
+import type { Logger } from '../logger';
+import { DidsApi } from '../modules/dids';
+import { GenericRecordsApi } from '../modules/generic-records';
+import { KeyManagementApi } from '../modules/kms';
+import { MdocApi } from '../modules/mdoc';
+import { SdJwtVcApi } from '../modules/sd-jwt-vc';
+import { W3cCredentialsApi } from '../modules/vc/W3cCredentialsApi';
+import { X509Api } from '../modules/x509';
+import type { DependencyManager } from '../plugins';
+import type { AgentConfig } from './AgentConfig';
+import type { AgentApi, EmptyModuleMap, ModulesMap, WithoutDefaultModules } from './AgentModules';
+import { EventEmitter } from './EventEmitter';
+import { AgentContext } from './context';
+export declare abstract class BaseAgent<AgentModules extends ModulesMap = EmptyModuleMap> {
+    protected agentConfig: AgentConfig;
+    readonly dependencyManager: DependencyManager;
+    protected logger: Logger;
+    protected eventEmitter: EventEmitter;
+    protected _isInitialized: boolean;
+    protected agentContext: AgentContext;
+    readonly mdoc: MdocApi;
+    readonly genericRecords: GenericRecordsApi;
+    readonly dids: DidsApi;
+    readonly w3cCredentials: W3cCredentialsApi;
+    readonly sdJwtVc: SdJwtVcApi;
+    readonly x509: X509Api;
+    readonly kms: KeyManagementApi;
+    readonly modules: AgentApi<WithoutDefaultModules<AgentModules>>;
+    constructor(agentConfig: AgentConfig, dependencyManager: DependencyManager);
+    get isInitialized(): boolean;
+    get config(): AgentConfig;
+    get context(): AgentContext;
+}

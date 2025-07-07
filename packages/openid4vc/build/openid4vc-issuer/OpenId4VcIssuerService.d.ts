@@ -1,0 +1,269 @@
+import type { OpenId4VciMetadata } from '../shared';
+import type { OpenId4VciCreateCredentialOfferOptions, OpenId4VciCreateCredentialResponseOptions, OpenId4VciCreateIssuerOptions, OpenId4VciCreateStatelessCredentialOfferOptions } from './OpenId4VcIssuerServiceOptions';
+import { AgentContext, Query, QueryOptions, W3cCredentialService } from '@credo-ts/core';
+import { Oauth2AuthorizationServer, Oauth2Client, Oauth2ResourceServer } from '@openid4vc/oauth2';
+import { Openid4vciIssuer } from '@openid4vc/openid4vci';
+import { OpenId4VcIssuanceSessionState } from './OpenId4VcIssuanceSessionState';
+import { OpenId4VcIssuerModuleConfig } from './OpenId4VcIssuerModuleConfig';
+import { OpenId4VcIssuanceSessionRecord, OpenId4VcIssuanceSessionRepository, OpenId4VcIssuerRecord, OpenId4VcIssuerRepository } from './repository';
+/**
+ * @internal
+ */
+export declare class OpenId4VcIssuerService {
+    private w3cCredentialService;
+    private openId4VcIssuerConfig;
+    private openId4VcIssuerRepository;
+    private openId4VcIssuanceSessionRepository;
+    constructor(w3cCredentialService: W3cCredentialService, openId4VcIssuerConfig: OpenId4VcIssuerModuleConfig, openId4VcIssuerRepository: OpenId4VcIssuerRepository, openId4VcIssuanceSessionRepository: OpenId4VcIssuanceSessionRepository);
+    createStatelessCredentialOffer(agentContext: AgentContext, options: OpenId4VciCreateStatelessCredentialOfferOptions & {
+        issuer: OpenId4VcIssuerRecord;
+    }): Promise<{
+        credentialOffer: string;
+        credentialOfferObject: import("zod").objectInputType<{
+            credential_issuer: import("zod").ZodEffects<import("zod").ZodString, string, string>;
+            credential_configuration_ids: import("zod").ZodArray<import("zod").ZodString, "many">;
+            grants: import("zod").ZodOptional<import("zod").ZodObject<{
+                authorization_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                    issuer_state: import("zod").ZodOptional<import("zod").ZodString>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                    issuer_state: import("zod").ZodOptional<import("zod").ZodString>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                    issuer_state: import("zod").ZodOptional<import("zod").ZodString>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">>>;
+                "urn:ietf:params:oauth:grant-type:pre-authorized_code": import("zod").ZodOptional<import("zod").ZodObject<{
+                    "pre-authorized_code": import("zod").ZodString;
+                    tx_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">>>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                    "pre-authorized_code": import("zod").ZodString;
+                    tx_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">>>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                    "pre-authorized_code": import("zod").ZodString;
+                    tx_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">>>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">>>;
+            }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                authorization_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                    issuer_state: import("zod").ZodOptional<import("zod").ZodString>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                    issuer_state: import("zod").ZodOptional<import("zod").ZodString>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                    issuer_state: import("zod").ZodOptional<import("zod").ZodString>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">>>;
+                "urn:ietf:params:oauth:grant-type:pre-authorized_code": import("zod").ZodOptional<import("zod").ZodObject<{
+                    "pre-authorized_code": import("zod").ZodString;
+                    tx_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">>>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                    "pre-authorized_code": import("zod").ZodString;
+                    tx_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">>>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                    "pre-authorized_code": import("zod").ZodString;
+                    tx_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">>>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">>>;
+            }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                authorization_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                    issuer_state: import("zod").ZodOptional<import("zod").ZodString>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                    issuer_state: import("zod").ZodOptional<import("zod").ZodString>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                    issuer_state: import("zod").ZodOptional<import("zod").ZodString>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">>>;
+                "urn:ietf:params:oauth:grant-type:pre-authorized_code": import("zod").ZodOptional<import("zod").ZodObject<{
+                    "pre-authorized_code": import("zod").ZodString;
+                    tx_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">>>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                    "pre-authorized_code": import("zod").ZodString;
+                    tx_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">>>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                    "pre-authorized_code": import("zod").ZodString;
+                    tx_code: import("zod").ZodOptional<import("zod").ZodObject<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, "passthrough", import("zod").ZodTypeAny, import("zod").objectOutputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">, import("zod").objectInputType<{
+                        input_mode: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodLiteral<"numeric">, import("zod").ZodLiteral<"text">]>>;
+                        length: import("zod").ZodOptional<import("zod").ZodNumber>;
+                        description: import("zod").ZodOptional<import("zod").ZodString>;
+                    }, import("zod").ZodTypeAny, "passthrough">>>;
+                    authorization_server: import("zod").ZodOptional<import("zod").ZodEffects<import("zod").ZodString, string, string>>;
+                }, import("zod").ZodTypeAny, "passthrough">>>;
+            }, import("zod").ZodTypeAny, "passthrough">>>;
+        }, import("zod").ZodTypeAny, "passthrough">;
+    }>;
+    createCredentialOffer(agentContext: AgentContext, options: OpenId4VciCreateCredentialOfferOptions & {
+        issuer: OpenId4VcIssuerRecord;
+    }): Promise<{
+        issuanceSession: OpenId4VcIssuanceSessionRecord;
+        credentialOffer: string;
+    }>;
+    createCredentialResponse(agentContext: AgentContext, options: OpenId4VciCreateCredentialResponseOptions & {
+        issuanceSession: OpenId4VcIssuanceSessionRecord;
+    }): Promise<{
+        credentialResponse: import("zod").objectOutputType<{
+            credential: import("zod").ZodOptional<import("zod").ZodUnion<[import("zod").ZodString, import("zod").ZodRecord<import("zod").ZodString, import("zod").ZodAny>]>>;
+            credentials: import("zod").ZodOptional<import("zod").ZodArray<import("zod").ZodUnion<[import("zod").ZodString, import("zod").ZodRecord<import("zod").ZodString, import("zod").ZodAny>]>, "many">>;
+            transaction_id: import("zod").ZodOptional<import("zod").ZodString>;
+            c_nonce: import("zod").ZodOptional<import("zod").ZodString>;
+            c_nonce_expires_in: import("zod").ZodOptional<import("zod").ZodNumber>;
+            notification_id: import("zod").ZodOptional<import("zod").ZodString>;
+        }, import("zod").ZodTypeAny, "passthrough">;
+        issuanceSession: OpenId4VcIssuanceSessionRecord;
+    }>;
+    private verifyCredentialRequestProofs;
+    findIssuanceSessionsByQuery(agentContext: AgentContext, query: Query<OpenId4VcIssuanceSessionRecord>, queryOptions?: QueryOptions): Promise<OpenId4VcIssuanceSessionRecord[]>;
+    findSingleIssuancSessionByQuery(agentContext: AgentContext, query: Query<OpenId4VcIssuanceSessionRecord>): Promise<OpenId4VcIssuanceSessionRecord | null>;
+    getIssuanceSessionById(agentContext: AgentContext, issuanceSessionId: string): Promise<OpenId4VcIssuanceSessionRecord>;
+    getAllIssuers(agentContext: AgentContext): Promise<OpenId4VcIssuerRecord[]>;
+    getIssuerByIssuerId(agentContext: AgentContext, issuerId: string): Promise<OpenId4VcIssuerRecord>;
+    updateIssuer(agentContext: AgentContext, issuer: OpenId4VcIssuerRecord): Promise<void>;
+    createIssuer(agentContext: AgentContext, options: OpenId4VciCreateIssuerOptions): Promise<OpenId4VcIssuerRecord>;
+    rotateAccessTokenSigningKey(agentContext: AgentContext, issuer: OpenId4VcIssuerRecord, options?: Pick<OpenId4VciCreateIssuerOptions, 'accessTokenSignerKeyType'>): Promise<void>;
+    /**
+     * @param fetchExternalAuthorizationServerMetadata defaults to false
+     */
+    getIssuerMetadata(agentContext: AgentContext, issuerRecord: OpenId4VcIssuerRecord, fetchExternalAuthorizationServerMetadata?: boolean): Promise<OpenId4VciMetadata>;
+    createNonce(agentContext: AgentContext, issuer: OpenId4VcIssuerRecord): Promise<{
+        cNonce: string;
+        cNonceExpiresAt: Date;
+        cNonceExpiresInSeconds: number;
+    }>;
+    /**
+     * @todo nonces are very short lived (1 min), but it might be nice to also cache the nonces
+     * in the cache if we have 'seen' them. They will only be in the cache for a short time
+     * and it will prevent replay
+     */
+    private verifyNonce;
+    getIssuer(agentContext: AgentContext, options?: {
+        issuanceSessionId?: string;
+    }): Openid4vciIssuer;
+    getOauth2Client(agentContext: AgentContext): Oauth2Client;
+    getOauth2AuthorizationServer(agentContext: AgentContext, options?: {
+        issuanceSessionId?: string;
+    }): Oauth2AuthorizationServer;
+    getResourceServer(agentContext: AgentContext, issuerRecord: OpenId4VcIssuerRecord): Oauth2ResourceServer;
+    /**
+     * Update the record to a new state and emit an state changed event. Also updates the record
+     * in storage.
+     */
+    updateState(agentContext: AgentContext, issuanceSession: OpenId4VcIssuanceSessionRecord, newState: OpenId4VcIssuanceSessionState): Promise<void>;
+    emitStateChangedEvent(agentContext: AgentContext, issuanceSession: OpenId4VcIssuanceSessionRecord, previousState: OpenId4VcIssuanceSessionState | null): void;
+    private getGrantsFromConfig;
+    private getCredentialConfigurationsForRequest;
+    private getSignedCredentials;
+    private signW3cCredential;
+}

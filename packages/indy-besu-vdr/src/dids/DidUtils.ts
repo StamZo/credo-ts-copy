@@ -152,9 +152,42 @@ export function getVerificationMethod(
 ): VerificationMethod {
   switch (type) {
     case VerificationKeyType.Ed25519VerificationKey2018:
-      return getEd25519VerificationKey2018({ id, publicJwk: key, controller })
+      // Handle the key object that has publicKeyBase58 already computed
+      if (key.publicKeyBase58) {
+        return new VerificationMethod({
+          id,
+          type: 'Ed25519VerificationKey2018',
+          controller,
+          publicKeyBase58: key.publicKeyBase58,
+        })
+      }
+      // Fallback to computing base58 if only publicKey is provided
+      const ed25519PublicKey = key.publicKey || key
+      const publicKeyBase58 = TypedArrayEncoder.toBase58(ed25519PublicKey)
+      return new VerificationMethod({
+        id,
+        type: 'Ed25519VerificationKey2018',
+        controller,
+        publicKeyBase58,
+      })
     case VerificationKeyType.X25519KeyAgreementKey2020:
-      return getX25519KeyAgreementKey2019({ id, publicJwk: key, controller })
+      // Similar handling for X25519
+      if (key.publicKeyBase58) {
+        return new VerificationMethod({
+          id,
+          type: 'X25519KeyAgreementKey2019',
+          controller,
+          publicKeyBase58: key.publicKeyBase58,
+        })
+      }
+      const x25519PublicKey = key.publicKey || key
+      const x25519PublicKeyBase58 = TypedArrayEncoder.toBase58(x25519PublicKey)
+      return new VerificationMethod({
+        id,
+        type: 'X25519KeyAgreementKey2019',
+        controller,
+        publicKeyBase58: x25519PublicKeyBase58,
+      })
     case VerificationKeyType.EcdsaSecp256k1RecoveryMethod2020:
       return getEcdsaSecp256k1RecoveryMethod2020({ id, key, controller })
   }

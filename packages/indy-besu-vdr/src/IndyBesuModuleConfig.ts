@@ -1,11 +1,16 @@
+// packages/indy-besu-vdr/src/IndyBesuModuleConfig.ts
 export interface IndyBesuModuleConfigOptions {
   chainId: number
   nodeAddress: string
   didRegistryAddress?: string
   schemaRegistryAddress?: string
   credentialDefinitionRegistryAddress?: string
-  skipBlockchainWrites?: boolean // New option for testing
-  transactionTimeoutMs?: number // Configurable timeout
+  skipBlockchainWrites?: boolean
+  transactionTimeoutMs?: number
+  connectionTimeoutMs?: number
+  failOnConnectionError?: boolean
+  gasLimit?: number
+  maxRetries?: number
 }
 
 export class IndyBesuModuleConfig {
@@ -16,6 +21,10 @@ export class IndyBesuModuleConfig {
   public readonly credentialDefinitionRegistryAddress: string
   public readonly skipBlockchainWrites: boolean
   public readonly transactionTimeoutMs: number
+  public readonly connectionTimeoutMs: number
+  public readonly failOnConnectionError: boolean
+  public readonly gasLimit: number
+  public readonly maxRetries: number
 
   constructor(options: IndyBesuModuleConfigOptions) {
     this.chainId = options.chainId
@@ -27,8 +36,12 @@ export class IndyBesuModuleConfig {
     this.credentialDefinitionRegistryAddress = 
       options.credentialDefinitionRegistryAddress || '0x0000000000000000000000000000000000004444'
     
-    // New options
+    // Configuration options
     this.skipBlockchainWrites = options.skipBlockchainWrites || false
     this.transactionTimeoutMs = options.transactionTimeoutMs || 30000
+    this.connectionTimeoutMs = options.connectionTimeoutMs || 10000
+    this.failOnConnectionError = options.failOnConnectionError || false
+    this.gasLimit = options.gasLimit || 1000000
+    this.maxRetries = options.maxRetries || 3
   }
 }

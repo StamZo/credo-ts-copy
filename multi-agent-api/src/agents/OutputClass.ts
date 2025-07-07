@@ -37,4 +37,8 @@ export const redText = (text: string, reset?: boolean) => {
   if (reset) return Color.Red + text + Color.Reset
 
   return Color.Red + text
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> cea78ecd (staff ad api)

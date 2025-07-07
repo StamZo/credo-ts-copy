@@ -1,3 +1,4 @@
+// packages/indy-besu-vdr/src/dids/IndyBesuDidRegistrar.ts
 import {
   AgentContext,
   Buffer,
@@ -22,166 +23,116 @@ import {
   VerificationKeyType,
 } from './DidUtils'
 import { SigningKey } from 'ethers'
+import { IndyBesuModuleConfig } from '../IndyBesuModuleConfig'
 
 export class IndyBesuDidRegistrar implements DidRegistrar {
   public readonly supportedMethods = ['ethr']
 
   public async create(agentContext: AgentContext, options: IndyBesuDidCreateOptions): Promise<DidCreateResult> {
-    console.log('🏗️  IndyBesuDidRegistrar.create() called')
+    agentContext.config.logger.info('Creating DID...')
     
     try {
-      console.log('📦 Resolving DidRegistry from dependency manager...')
       const didRegistry = agentContext.dependencyManager.resolve(DidRegistry)
-      console.log('✅ DidRegistry resolved')
+      const config = agentContext.dependencyManager.resolve(IndyBesuModuleConfig)
 
       const didPrivateKey = options.secret?.didPrivateKey
       if (!didPrivateKey) {
-        console.log('❌ Missing didPrivateKey in secret')
         return failedResult('Missing didPrivateKey in secret')
       }
-      console.log('🔑 Got didPrivateKey')
 
       // Convert Buffer to Uint8Array if needed
       const privateKeyBytes = Buffer.isBuffer(didPrivateKey) ? 
         new Uint8Array(didPrivateKey) : 
         didPrivateKey
-      console.log('🔄 Converted private key to Uint8Array')
 
       // Create signing key and derive public key
-      console.log('⚙️  Creating SigningKey...')
       const signingKey = new SigningKey(privateKeyBytes)
-      console.log('✅ SigningKey created')
-      
       const publicKeyHex = signingKey.publicKey.slice(2) // Remove '0x' prefix
       const publicKey = Buffer.from(publicKeyHex, 'hex')
-      console.log('🔑 Derived public key')
 
       // Build DID
-      console.log('🆔 Building DID...')
       const did = buildDid(options.method, publicKey)
-      console.log('✅ DID built:', did)
+      agentContext.config.logger.debug(`Built DID: ${did}`)
 
       // Create signer
-      console.log('✍️  Creating IndyBesuSigner...')
       const signer = new IndyBesuSigner(privateKeyBytes)
-      console.log('✅ IndyBesuSigner created')
 
-      // THIS IS LIKELY WHERE IT HANGS - blockchain operations
-      console.log('⛓️  Starting blockchain operations...')
-      
-      // Set verification keys if provided
-      if (options?.options?.verificationKeys) {
-        console.log(`🔐 Processing ${options.options.verificationKeys.length} verification keys...`)
-        
-        for (let i = 0; i < options.options.verificationKeys.length; i++) {
-          const verificationKey = options.options.verificationKeys[i]
-          console.log(`🔐 Processing verification key ${i + 1}/${options.options.verificationKeys.length}`)
+      // Skip blockchain operations if in mock mode
+      if (config.skipBlockchainWrites) {
+        agentContext.config.logger.info('Mock mode: Skipping blockchain writes')
+      } else {
+        // Process verification keys
+        if (options?.options?.verificationKeys) {
+          agentContext.config.logger.info(`Setting ${options.options.verificationKeys.length} verification keys...`)
           
-          const materialPropertyName = getVerificationMaterialPropertyName(verificationKey.type)
-          const material = getVerificationMaterial(verificationKey.type, verificationKey.key)
-          const purpose = getVerificationPurpose(verificationKey.purpose)
-
-          const keyAttribute = {
-            [materialPropertyName]: material,
-            purpose,
-            type: VerificationKeyType[verificationKey.type],
-          }
-
-          console.log(`⛓️  Calling didRegistry.setAttribute for key ${i + 1}...`)
-          agentContext.config.logger.debug('Setting DID attribute:', { did, keyAttribute })
-          
-          try {
-            // THIS CALL LIKELY HANGS - add timeout wrapper
-            const setAttributePromise = didRegistry.setAttribute(did, keyAttribute, BigInt(100000), signer)
-            const timeoutPromise = new Promise<never>((_, reject) => {
-              setTimeout(() => {
-                reject(new Error(`setAttribute timed out after 30 seconds for key ${i + 1}`))
-              }, 30000)
-            })
+          for (let i = 0; i < options.options.verificationKeys.length; i++) {
+            const verificationKey = options.options.verificationKeys[i]
             
-            await Promise.race([setAttributePromise, timeoutPromise])
-            console.log(`✅ setAttribute completed for key ${i + 1}`)
-          } catch (error: any) {
-            console.warn(`⚠️  setAttribute failed for key ${i + 1}:`, error.message)
-            // Continue with other keys instead of failing completely
+            try {
+              const materialPropertyName = getVerificationMaterialPropertyName(verificationKey.type)
+              const material = getVerificationMaterial(verificationKey.type, verificationKey.key)
+              const purpose = getVerificationPurpose(verificationKey.purpose)
+
+              const keyAttribute = {
+                [materialPropertyName]: material,
+                purpose,
+                type: VerificationKeyType[verificationKey.type],
+              }
+
+              agentContext.config.logger.debug(`Setting attribute for key ${i + 1}...`)
+              await didRegistry.setAttribute(did, keyAttribute, BigInt(100000), signer)
+              agentContext.config.logger.debug(`Attribute set for key ${i + 1}`)
+              
+            } catch (error: any) {
+              agentContext.config.logger.warn(`Failed to set verification key ${i + 1}: ${error.message}`)
+              
+              if (config.failOnConnectionError) {
+                throw error
+              }
+              // Continue with other keys
+            }
           }
         }
-      }
 
-      // Set endpoints if provided
-      if (options?.options?.endpoints) {
-        console.log(`🌐 Processing ${options.options.endpoints.length} endpoints...`)
-        
-        for (let i = 0; i < options.options.endpoints.length; i++) {
-          const endpoint = options.options.endpoints[i]
-          console.log(`🌐 Processing endpoint ${i + 1}/${options.options.endpoints.length}`)
-          
-          const serviceAttribute = {
-            serviceEndpoint: endpoint.endpoint,
-            type: endpoint.type,
-          }
-          
-          console.log(`⛓️  Calling didRegistry.setAttribute for endpoint ${i + 1}...`)
-          try {
-            const setAttributePromise = didRegistry.setAttribute(did, serviceAttribute, BigInt(100000), signer)
-            const timeoutPromise = new Promise<never>((_, reject) => {
-              setTimeout(() => {
-                reject(new Error(`setAttribute timed out after 30 seconds for endpoint ${i + 1}`))
-              }, 30000)
-            })
-            
-            await Promise.race([setAttributePromise, timeoutPromise])
-            console.log(`✅ setAttribute completed for endpoint ${i + 1}`)
-          } catch (error: any) {
-            console.warn(`⚠️  setAttribute failed for endpoint ${i + 1}:`, error.message)
-            // Continue instead of failing completely
-          }
-        }
-      
-
-        // Set endpoints if provided
+        // Process endpoints
         if (options?.options?.endpoints) {
-          console.log(`🌐 Processing ${options.options.endpoints.length} endpoints...`)
+          agentContext.config.logger.info(`Setting ${options.options.endpoints.length} endpoints...`)
           
           for (let i = 0; i < options.options.endpoints.length; i++) {
             const endpoint = options.options.endpoints[i]
-            console.log(`🌐 Processing endpoint ${i + 1}/${options.options.endpoints.length}`)
             
-            const serviceAttribute = {
-              serviceEndpoint: endpoint.endpoint,
-              type: endpoint.type,
-            }
-            
-            console.log(`⛓️  Calling didRegistry.setAttribute for endpoint ${i + 1}...`)
             try {
-              const setAttributePromise = didRegistry.setAttribute(did, serviceAttribute, BigInt(100000), signer)
-              const timeoutPromise = new Promise<never>((_, reject) => {
-                setTimeout(() => {
-                  reject(new Error(`setAttribute timed out after 30 seconds for endpoint ${i + 1}`))
-                }, 30000)
-              })
+              const serviceAttribute = {
+                serviceEndpoint: endpoint.endpoint,
+                type: endpoint.type,
+              }
               
-              await Promise.race([setAttributePromise, timeoutPromise])
-              console.log(`✅ setAttribute completed for endpoint ${i + 1}`)
+              agentContext.config.logger.debug(`Setting endpoint ${i + 1}...`)
+              await didRegistry.setAttribute(did, serviceAttribute, BigInt(100000), signer)
+              agentContext.config.logger.debug(`Endpoint set ${i + 1}`)
+              
             } catch (error: any) {
-              console.warn(`⚠️  setAttribute failed for endpoint ${i + 1}:`, error.message)
-              // Continue instead of failing completely
+              agentContext.config.logger.warn(`Failed to set endpoint ${i + 1}: ${error.message}`)
+              
+              if (config.failOnConnectionError) {
+                throw error
+              }
+              // Continue with other endpoints
             }
           }
         }
       }
 
-      console.log('🏗️  Building DID document...')
       // Build DID document
       const didDocument = buildDidDocument(
         did,
-        { publicKey: publicKey }, // Pass as object with publicKey property
+        { publicKey: publicKey },
         options?.options?.endpoints,
         options?.options?.verificationKeys
       )
-      console.log('✅ DID document built')
 
-      console.log('🎉 DID creation completed successfully')
+      agentContext.config.logger.info('DID creation completed successfully')
+      
       return {
         didDocumentMetadata: {},
         didRegistrationMetadata: {},
@@ -196,9 +147,7 @@ export class IndyBesuDidRegistrar implements DidRegistrar {
         },
       }
     } catch (error: any) {
-      console.error('💥 DID creation failed with error:', error.message)
-      console.error('Stack trace:', error.stack)
-      agentContext.config.logger.error('Failed to create DID:', error)
+      agentContext.config.logger.error('DID creation failed:', error)
       return failedResult(`Failed to create DID: ${error.message}`)
     }
   }
@@ -238,7 +187,7 @@ export interface IndyBesuDidCreateOptions extends DidCreateOptions {
     verificationKeys?: VerificationKey[]
   }
   secret?: {
-    didPrivateKey: Buffer | Uint8Array // Accept both Buffer and Uint8Array
+    didPrivateKey: Buffer | Uint8Array
   }
 }
 

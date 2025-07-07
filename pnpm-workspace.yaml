@@ -3,6 +3,7 @@ packages:
   - demo
   - demo-openid
   - samples/*
+  - multi-agent-api
 
 catalog:
   '@types/node': ^20.19.0
@@ -44,3 +45,7 @@ onlyBuiltDependencies:
   - '@hyperledger/anoncreds-nodejs'
   - '@hyperledger/indy-vdr-nodejs'
   - '@openwallet-foundation/askar-nodejs'
+
+overrides:
+  undici: ^6.20.1
+  '@credo-ts/indy-besu-vdr': link:packages/indy-besu-vdr
