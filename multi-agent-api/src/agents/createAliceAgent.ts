@@ -1,29 +1,24 @@
-import type {
-  AnonCredsProofFormatService,
-  RegisterCredentialDefinitionReturnStateFinished,
-  RegisterSchemaReturnStateFinished,
-  
-  
-} from '@credo-ts/anoncreds'
-import type { 
-  
-} from '@credo-ts/core'
 
-import { CREDENTIALS_CONTEXT_V1_URL } from '@credo-ts/core'
-import { ConnectionEventTypes, ConnectionStateChangedEvent } from '@credo-ts/core'
+
 import {
+  ConnectionEventTypes, 
+  ConnectionStateChangedEvent ,
   CredentialEventTypes,
   CredentialState,
   CredentialStateChangedEvent,
-  
-} from '@credo-ts/core'
-import {
   ProofEventTypes,
   ProofState,
   ProofStateChangedEvent,
   V2ProofProtocol,
-} from '@credo-ts/core'
-import { Key, KeyType, TypedArrayEncoder, utils } from '@credo-ts/core'
+} from '@credo-ts/didcomm'
+
+import type {
+  AnonCredsProofFormatService,
+  RegisterCredentialDefinitionReturnStateFinished,
+  RegisterSchemaReturnStateFinished,
+} from '@credo-ts/anoncreds'
+
+import { KeyType, TypedArrayEncoder, utils, CREDENTIALS_CONTEXT_V1_URL } from '@credo-ts/core'
 
 import { IndyBesuDidCreateOptions, VerificationKeyPurpose, VerificationKeyType } from '@credo-ts/indy-besu-vdr'
 import type BottomBar from 'inquirer/lib/ui/bottom-bar'
