@@ -2,27 +2,12 @@ import express from 'express'
 import { createFaberAgent } from './agents/createFaberAgent'
 import { createAliceAgent } from './agents/createAliceAgent'
 
-<<<<<<< HEAD
-const app = express()
-=======
 const app: express.Application = express()
->>>>>>> cea78ecd (staff ad api)
 app.use(express.json())
 
 let agents: any = {}
 
 async function setupAgents() {
-<<<<<<< HEAD
-  const faber = await createFaberAgent.build()
-  const alice = await createAliceAgent.build()
-
-  agents = { faber, alice }
-  console.log('Agents initialized.')
-}
-
-app.get('/', (req, res) => {
-  res.send('Multi-Agent API is running.')
-=======
   try {
     console.log('Initializing agents...')
     const faber = await createFaberAgent.build()
@@ -38,23 +23,10 @@ app.get('/', (req, res) => {
 
 app.get('/', (req, res) => {
   res.send('Multi-Agent Credo API is running.')
->>>>>>> cea78ecd (staff ad api)
 })
 
 app.get('/status', (req, res) => {
   res.json({
-<<<<<<< HEAD
-    agents: Object.keys(agents),
-  })
-})
-
-setupAgents().then(() => {
-  app.listen(4000, () => {
-    console.log('Server running at http://localhost:4000')
-  })
-})
-
-=======
     framework: 'Credo',
     agents: Object.keys(agents),
     indyBesuVdr: 'enabled',
@@ -62,7 +34,6 @@ setupAgents().then(() => {
 })
 
 // Connection endpoints
->>>>>>> cea78ecd (staff ad api)
 app.post('/connections/invite', async (req, res) => {
   try {
     // Faber creates an invitation
@@ -73,10 +44,7 @@ app.post('/connections/invite', async (req, res) => {
     const inviteUrl = outOfBand.outOfBandInvitation.toUrl({ domain: `http://localhost:4000` })
     res.json({ inviteUrl })
   } catch (error) {
-<<<<<<< HEAD
-=======
     console.error('Error creating invitation:', error)
->>>>>>> cea78ecd (staff ad api)
     res.status(500).json({ error: (error as Error).message })
   }
 })
@@ -84,92 +52,20 @@ app.post('/connections/invite', async (req, res) => {
 app.post('/connections/accept', async (req, res) => {
   try {
     const { inviteUrl } = req.body
-<<<<<<< HEAD
-=======
     if (!inviteUrl) {
       return res.status(400).json({ error: 'inviteUrl is required' })
     }
     
->>>>>>> cea78ecd (staff ad api)
     // Alice accepts the invitation
     await agents.alice.acceptConnection(inviteUrl)
     res.json({ status: 'Alice connected to Faber!' })
   } catch (error) {
-<<<<<<< HEAD
-=======
     console.error('Error accepting connection:', error)
->>>>>>> cea78ecd (staff ad api)
     res.status(500).json({ error: (error as Error).message })
   }
 })
 
-<<<<<<< HEAD
-
-app.post('/credentials/register-schema', async (req, res) => {
-  try {
-    const result = await agents.faber.registerSchema()
-    res.json({ schemaId: result.schemaId })
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message })
-  }
-})
-
-
-app.post('/credentials/register-creddef', async (req, res) => {
-  try {
-    const result = await agents.faber.registerCredentialDefinition()
-    res.json({ credDefId: result.credentialDefinitionId })
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message })
-  }
-})
-
-
-app.post('/credentials/issue', async (req, res) => {
-  try {
-    const { to, type = 'anoncreds', waitForAcceptance = false } = req.body;
-    const agent = to === 'alice' ? agents.faber : agents.faber; // (can improve later)
-    let record;
-
-    if (type === 'anoncreds') {
-      record = await agent.issueAnonCredsCredential({ waitForAcceptance });
-    } else if (type === 'jsonld') {
-      record = await agent.issueJsonLdCredential({ waitForAcceptance });
-    } else {
-      throw new Error('Unknown credential type');
-    }
-
-    res.json({ status: 'Credential offer sent', credentialRecordId: record.id, type });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-
-app.get('/credentials/:id/status', async (req, res) => {
-  try {
-    const record = await agents.faber.agent.credentials.findById(req.params.id)
-    res.json({ id: record.id, state: record.state })
-  } catch (error) {
-    res.status(404).json({ error: "Credential record not found" })
-  }
-})
-
-
-
-
-app.post('/credentials/accept', async (req, res) => {
-  try {
-    await agents.alice.acceptAllCredentialOffers()
-    res.json({ status: 'Alice accepted all credential offers.' })
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message })
-  }
-})
-
-=======
 // DID endpoints
->>>>>>> cea78ecd (staff ad api)
 app.post('/agent/create-did', async (req, res) => {
   try {
     const type = req.body?.type || 'anoncreds'
@@ -180,47 +76,16 @@ app.post('/agent/create-did', async (req, res) => {
     } else if (type === 'w3c') {
       did = await agents.faber.createW3cIndyBesuDid()
     } else {
-<<<<<<< HEAD
-      throw new Error('Unknown DID type')
-=======
       throw new Error('Unknown DID type. Use "anoncreds" or "w3c"')
->>>>>>> cea78ecd (staff ad api)
     }
 
     res.json({ status: `DID created for Faber (${type})`, did })
   } catch (error) {
-<<<<<<< HEAD
-=======
     console.error('Error creating DID:', error)
->>>>>>> cea78ecd (staff ad api)
     res.status(500).json({ error: (error as Error).message })
   }
 })
 
-<<<<<<< HEAD
-
-app.post('/proof/request', async (req, res) => {
-  try {
-    const { type = 'anoncreds', waitForPresentation = false } = req.body;
-    let record;
-    if (type === 'anoncreds') {
-      record = await agents.faber.sendAnonCredsProofRequest({ waitForPresentation });
-    } else if (type === 'jsonld') {
-      record = await agents.faber.sendJsonLdProofRequest({ waitForPresentation });
-    } else {
-      throw new Error('Unknown proof type');
-    }
-
-    if (!record || !record.id) {
-      return res.status(500).json({ error: "No proof record returned" });
-    }
-    res.json({ status: 'Proof request sent', proofRecordId: record.id, type });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-=======
 // Schema and CredDef endpoints
 app.post('/credentials/register-schema', async (req, res) => {
   try {
@@ -348,17 +213,13 @@ app.post('/proof/request', async (req, res) => {
     res.status(500).json({ error: (error as Error).message })
   }
 })
->>>>>>> cea78ecd (staff ad api)
 
 app.post('/proof/accept', async (req, res) => {
   try {
     await agents.alice.acceptAllProofRequests()
     res.json({ status: 'Alice accepted all proof requests.' })
   } catch (error) {
-<<<<<<< HEAD
-=======
     console.error('Error accepting proofs:', error)
->>>>>>> cea78ecd (staff ad api)
     res.status(500).json({ error: (error as Error).message })
   }
 })
@@ -371,11 +232,6 @@ app.get('/proof/:id/status', async (req, res) => {
     let revealedAttributes = undefined
 
     if (record.state === 'done') {
-<<<<<<< HEAD
-      // Get the format data
-      const formatData = await agents.faber.agent.proofs.getFormatData(id)
-      revealedAttributes = formatData.presentation?.anoncreds?.requested_proof?.revealed_attrs || {}
-=======
       try {
         // Get the format data
         const formatData = await agents.faber.agent.proofs.getFormatData(id)
@@ -383,30 +239,21 @@ app.get('/proof/:id/status', async (req, res) => {
       } catch (formatError) {
         console.warn('Could not get format data:', formatError)
       }
->>>>>>> cea78ecd (staff ad api)
     }
 
     res.json({
       id: record.id,
       state: record.state,
-<<<<<<< HEAD
-      ...(revealedAttributes !== undefined && { revealedAttributes }),
-    })
-  } catch (error) {
-=======
       protocolVersion: record.protocolVersion,
       connectionId: record.connectionId,
       ...(revealedAttributes !== undefined && { revealedAttributes }),
     })
   } catch (error) {
     console.error('Error getting proof status:', error)
->>>>>>> cea78ecd (staff ad api)
     res.status(404).json({ error: 'Proof record not found' })
   }
 })
 
-<<<<<<< HEAD
-=======
 // Message endpoints
 app.post('/messages/send', async (req, res) => {
   try {
@@ -489,4 +336,3 @@ setupAgents()
   })
 
 export default app
->>>>>>> cea78ecd (staff ad api)
