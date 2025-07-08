@@ -1,33 +1,36 @@
-import type {
-  AnonCredsProofFormatService,
-  RegisterCredentialDefinitionReturnStateFinished,
-  RegisterSchemaReturnStateFinished,
-} from '@credo-ts/anoncreds'
-import type { 
-  ConnectionRecord, 
-  CredentialExchangeRecord, 
-  ProofExchangeRecord,
-  RequestProofOptions,
-} from '@credo-ts/core'
-
-import { CREDENTIALS_CONTEXT_V1_URL } from '@credo-ts/core'
-import { ConnectionEventTypes, ConnectionStateChangedEvent } from '@credo-ts/core'
-import {
-  CredentialEventTypes,
-  CredentialState,
-  CredentialStateChangedEvent,
-} from '@credo-ts/core'
 import {
   ProofEventTypes,
   ProofState,
   ProofStateChangedEvent,
   V2ProofProtocol,
-} from '@credo-ts/core'
+  CredentialEventTypes,
+  CredentialState,
+  CredentialStateChangedEvent,
+  ConnectionEventTypes, ConnectionStateChangedEvent 
+} from '@credo-ts/didcomm'
+
+import type { 
+  ConnectionRecord, 
+  CredentialExchangeRecord, 
+  ProofExchangeRecord,
+  RequestProofOptions,
+} from '@credo-ts/didcomm'
+
+import type {
+  AnonCredsProofFormatService,
+  RegisterCredentialDefinitionReturnStateFinished,
+  RegisterSchemaReturnStateFinished,
+} from '@credo-ts/anoncreds'
+
+
+import { CREDENTIALS_CONTEXT_V1_URL } from '@credo-ts/core'
+
+
+
 import { Key, KeyType, TypedArrayEncoder, utils } from '@credo-ts/core'
 
 import { IndyBesuDidCreateOptions, VerificationKeyPurpose, VerificationKeyType } from '@credo-ts/indy-besu-vdr'
-import type BottomBar from 'inquirer/lib/ui/bottom-bar'
-import { ui } from 'inquirer'
+
 
 import { BaseAgent, indyNetworkConfig } from './BaseAgent'
 import { Color, Output, greenText, purpleText, redText } from './OutputClass'
@@ -44,12 +47,12 @@ export class createFaberAgent extends BaseAgent {
   public schema?: RegisterSchemaReturnStateFinished
   public credentialDefinition?: RegisterCredentialDefinitionReturnStateFinished
   public issuerId?: string
-  public ui: BottomBar
+
   public didPrivateKey?: Uint8Array
 
   public constructor(port: number, name: string) {
     super({ port, name })
-    this.ui = new ui.BottomBar()
+    
   }
 
   public static async build(): Promise<createFaberAgent> {
@@ -329,7 +332,7 @@ export class createFaberAgent extends BaseAgent {
       throw new Error(redText('Missing anoncreds credentialDefinitionId'))
     }
     const connectionRecord = await this.getConnectionRecord()
-    this.ui.updateBottomBar(greenText('\nSending credential offer...\n', false))
+    
 
     const credential = {
       attributes: [
@@ -346,7 +349,7 @@ export class createFaberAgent extends BaseAgent {
       credentialFormats: { anoncreds: credential },
     })
 
-    this.ui.updateBottomBar(`\nCredential offer sent!\n\n${Color.Reset}`)
+    
     console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
     console.log('Go to the Alice agent to accept the credential offer\n')
 
@@ -363,7 +366,7 @@ export class createFaberAgent extends BaseAgent {
 
     const connectionRecord = await this.getConnectionRecord()
 
-    this.ui.updateBottomBar(greenText('\nSending credential offer...\n', false))
+    
 
     const credential = {
       '@context': [CREDENTIALS_CONTEXT_V1_URL, 'https://www.w3.org/2018/credentials/examples/v1'],
@@ -390,7 +393,7 @@ export class createFaberAgent extends BaseAgent {
       },
     })
 
-    this.ui.updateBottomBar(`\nCredential offer sent!\n\n${Color.Reset}`)
+    
     console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
     console.log('Go to the Alice agent to accept the credential offer\n')
 
@@ -401,7 +404,7 @@ export class createFaberAgent extends BaseAgent {
   }
 
   private async printProofFlow(print: string) {
-    this.ui.updateBottomBar(print)
+    
     await new Promise((f) => setTimeout(f, 2000))
   }
 
@@ -476,7 +479,7 @@ export class createFaberAgent extends BaseAgent {
 
     const record = await this.agent.proofs.requestProof(request)
 
-    this.ui.updateBottomBar(`\nProof request sent!\n\n${Color.Reset}`)
+   
 
     console.log(purpleText(`Proof request:${Color.Reset} ${JSON.stringify(request, null, 2)}`))
     console.log(`Go to the Alice agent to accept the proof request\n`)
@@ -520,8 +523,7 @@ export class createFaberAgent extends BaseAgent {
 
     const record = await this.agent.proofs.requestProof(request as any);
 
-    this.ui.updateBottomBar(`\nJSON-LD proof request sent!\n\n${Color.Reset}`);
-
+    
     if (options?.waitForPresentation) {
       await this.waitForProof(record.id);
     }
