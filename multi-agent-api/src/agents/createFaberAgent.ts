@@ -1,69 +1,45 @@
+import {
+  ProofEventTypes,
+  ProofState,
+  ProofStateChangedEvent,
+  V2ProofProtocol,
+  CredentialEventTypes,
+  CredentialState,
+  CredentialStateChangedEvent,
+  ConnectionEventTypes, ConnectionStateChangedEvent 
+} from '@credo-ts/didcomm'
+
+import type { 
+  ConnectionRecord, 
+  CredentialExchangeRecord, 
+  ProofExchangeRecord,
+  RequestProofOptions,
+} from '@credo-ts/didcomm'
+
 import type {
   AnonCredsProofFormatService,
   RegisterCredentialDefinitionReturnStateFinished,
   RegisterSchemaReturnStateFinished,
-<<<<<<< HEAD
-} from '@aries-framework/anoncreds'
-import {
-  CREDENTIALS_CONTEXT_V1_URL,
-  ConnectionRecord,
-  ConnectionStateChangedEvent,
-=======
 } from '@credo-ts/anoncreds'
+
+
 import { CREDENTIALS_CONTEXT_V1_URL } from '@credo-ts/core'
-// Connections
-import { ConnectionRecord, ConnectionStateChangedEvent, ConnectionEventTypes } from '@credo-ts/connections'
-// Credentials (AnonCreds)
-import {
->>>>>>> cea78ecd (staff ad api)
-  CredentialEventTypes,
-  CredentialExchangeRecord,
-  CredentialState,
-  CredentialStateChangedEvent,
-<<<<<<< HEAD
-  Key,
-=======
-} from '@credo-ts/anoncreds'
-// Proofs
-import {
->>>>>>> cea78ecd (staff ad api)
-  ProofEventTypes,
-  ProofExchangeRecord,
-  ProofState,
-  ProofStateChangedEvent,
-  RequestProofOptions,
-  V2ProofProtocol,
-<<<<<<< HEAD
-} from '@aries-framework/core'
-import { IndyBesuDidCreateOptions, VerificationKeyPurpose, VerificationKeyType } from '@aries-framework/indy-besu-vdr'
-import type BottomBar from 'inquirer/lib/ui/bottom-bar'
-import { ConnectionEventTypes, KeyType, TypedArrayEncoder, utils } from '@aries-framework/core'
-=======
-} from '@credo-ts/proofs'
-// Core crypto types
+
+
+
 import { Key, KeyType, TypedArrayEncoder, utils } from '@credo-ts/core'
 
 import { IndyBesuDidCreateOptions, VerificationKeyPurpose, VerificationKeyType } from '@credo-ts/indy-besu-vdr'
 import type BottomBar from 'inquirer/lib/ui/bottom-bar'
-import { ConnectionEventTypes, KeyType, TypedArrayEncoder, utils } from '@credo-ts/core'
->>>>>>> cea78ecd (staff ad api)
 import { ui } from 'inquirer'
 
 import { BaseAgent, indyNetworkConfig } from './BaseAgent'
 import { Color, Output, greenText, purpleText, redText } from './OutputClass'
 import { computeAddress } from 'ethers'
-<<<<<<< HEAD
-import { request } from 'express'
-
-export enum RegistryOptions {
-  indy = 'did:indy',
-  cheqd = 'did:cheqd',
-=======
 import crypto from 'crypto'
 
 export enum RegistryOptions {
   indy = 'did:indy',
->>>>>>> cea78ecd (staff ad api)
   indyBesu = 'did:ethr',
 }
 
@@ -73,17 +49,10 @@ export class createFaberAgent extends BaseAgent {
   public credentialDefinition?: RegisterCredentialDefinitionReturnStateFinished
   public issuerId?: string
   public ui: BottomBar
-<<<<<<< HEAD
-  public didKey?: Key
-
-  public constructor(port: number, name: string) {
-    super({ port, name, useLegacyIndySdk: true })
-=======
   public didPrivateKey?: Uint8Array
 
   public constructor(port: number, name: string) {
     super({ port, name })
->>>>>>> cea78ecd (staff ad api)
     this.ui = new ui.BottomBar()
   }
 
@@ -94,9 +63,6 @@ export class createFaberAgent extends BaseAgent {
   }
 
   public async createIndyBesuDid() {
-<<<<<<< HEAD
-    const createdDid = await this.agent.dids.create<IndyBesuDidCreateOptions>({ method: 'ethr' })
-=======
     // Generate a random private key for the DID
     const privateKey = crypto.randomBytes(32)
     this.didPrivateKey = new Uint8Array(privateKey)
@@ -107,7 +73,6 @@ export class createFaberAgent extends BaseAgent {
         didPrivateKey: privateKey,
       },
     })
->>>>>>> cea78ecd (staff ad api)
 
     if (createdDid.didState.state == 'failed') {
       throw new Error(createdDid.didState.reason)
@@ -116,22 +81,15 @@ export class createFaberAgent extends BaseAgent {
     console.log(purpleText(`Created DID${Color.Reset}: ${JSON.stringify(createdDid.didState.didDocument, null, 2)}`))
 
     this.issuerId = createdDid.didState.did
-<<<<<<< HEAD
-    this.didKey = createdDid.didState.secret?.didKey as Key
-=======
->>>>>>> cea78ecd (staff ad api)
 
     return createdDid.didState.did 
   }
 
   public async createW3cIndyBesuDid() {
-<<<<<<< HEAD
-=======
     // Generate a random private key for the DID
     const privateKey = crypto.randomBytes(32)
     this.didPrivateKey = new Uint8Array(privateKey)
 
->>>>>>> cea78ecd (staff ad api)
     const assertKey = await this.agent.wallet.createKey({ keyType: KeyType.Ed25519 })
 
     const createdDid = await this.agent.dids.create<IndyBesuDidCreateOptions>({
@@ -145,14 +103,6 @@ export class createFaberAgent extends BaseAgent {
           },
         ],
       },
-<<<<<<< HEAD
-    })
-
-    console.log(purpleText(`Created DID${Color.Reset}: ${JSON.stringify(createdDid.didState.didDocument, null, 2)}`))
-
-    this.issuerId = createdDid.didState.did
-    this.didKey = createdDid.didState.secret?.didKey as Key
-=======
       secret: {
         didPrivateKey: privateKey,
       },
@@ -165,7 +115,6 @@ export class createFaberAgent extends BaseAgent {
     console.log(purpleText(`Created DID${Color.Reset}: ${JSON.stringify(createdDid.didState.didDocument, null, 2)}`))
 
     this.issuerId = createdDid.didState.did
->>>>>>> cea78ecd (staff ad api)
     return createdDid.didState.did 
   }
 
@@ -174,17 +123,10 @@ export class createFaberAgent extends BaseAgent {
     // and store the existing did in the wallet
     // indy did is based on private key (seed)
     const unqualifiedIndyDid = '2jEvRuKmfBJTRa7QowDpNN'
-<<<<<<< HEAD
-    const cheqdDid = 'did:cheqd:testnet:d37eba59-513d-42d3-8f9f-d1df0548b675'
-    const indyDid = `did:indy:${indyNetworkConfig.indyNamespace}:${unqualifiedIndyDid}`
-
-    const did = registry === RegistryOptions.indy ? indyDid : cheqdDid
-=======
     const indyDid = `did:indy:${indyNetworkConfig.indyNamespace}:${unqualifiedIndyDid}`
 
     const did = registry === RegistryOptions.indy ? indyDid : indyDid
 
->>>>>>> cea78ecd (staff ad api)
     await this.agent.dids.import({
       did,
       overwrite: true,
@@ -270,13 +212,10 @@ export class createFaberAgent extends BaseAgent {
       throw new Error(redText('Missing anoncreds issuerId'))
     }
 
-<<<<<<< HEAD
-=======
     if (!this.didPrivateKey) {
       throw new Error(redText('Missing DID private key'))
     }
 
->>>>>>> cea78ecd (staff ad api)
     const schemaTemplate = {
       name: 'FaberCollege' + utils.uuid(),
       version: '1.0.0',
@@ -289,13 +228,7 @@ export class createFaberAgent extends BaseAgent {
     const { schemaState } = await this.agent.modules.anoncreds.registerSchema({
       schema: schemaTemplate,
       options: {
-<<<<<<< HEAD
-        endorserMode: 'internal',
-        endorserDid: this.issuerId,
-        accountKey: this.didKey,
-=======
         secretKey: this.didPrivateKey,
->>>>>>> cea78ecd (staff ad api)
       },
     })
 
@@ -323,13 +256,10 @@ export class createFaberAgent extends BaseAgent {
       throw new Error(redText('Missing anoncreds schemaId'))
     }
 
-<<<<<<< HEAD
-=======
     if (!this.didPrivateKey) {
       throw new Error(redText('Missing DID private key'))
     }
 
->>>>>>> cea78ecd (staff ad api)
     console.log(greenText('Registering credential definition...\n', false))
 
     const { credentialDefinitionState } = await this.agent.modules.anoncreds.registerCredentialDefinition({
@@ -339,13 +269,7 @@ export class createFaberAgent extends BaseAgent {
         tag: 'latest',
       },
       options: {
-<<<<<<< HEAD
-        endorserMode: 'internal',
-        endorserDid: this.issuerId,
-        accountKey: this.didKey,
-=======
         secretKey: this.didPrivateKey,
->>>>>>> cea78ecd (staff ad api)
       },
     })
 
@@ -400,89 +324,6 @@ export class createFaberAgent extends BaseAgent {
         console.log(redText('Credential declined\n'))
         break
       case CredentialState.Abandoned:
-<<<<<<< HEAD
-        console.log(redText('Abondened\n'))
-    }
-  }
-
-public async issueAnonCredsCredential(options?: { waitForAcceptance?: boolean }) {
-  if (!this.credentialDefinition) {
-    throw new Error(redText('Missing anoncreds credentialDefinitionId'))
-  }
-  const connectionRecord = await this.getConnectionRecord()
-  this.ui.updateBottomBar(greenText('\nSending credential offer...\n', false))
-
-  const credential = {
-    attributes: [
-      { name: 'name', value: 'Alice Smith' },
-      { name: 'degree', value: 'Computer Science' },
-      { name: 'date', value: '01/01/2022' },
-    ],
-    credentialDefinitionId: this.credentialDefinition.credentialDefinitionId,
-  }
-
-  const record = await this.agent.credentials.offerCredential({
-    connectionId: connectionRecord.id,
-    protocolVersion: 'v2',
-    credentialFormats: { anoncreds: credential },
-  })
-
-  this.ui.updateBottomBar(`\nCredential offer sent!\n\n${Color.Reset}`)
-  console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
-  console.log('Go to the Alice agent to accept the credential offer\n')
-
-  if (options?.waitForAcceptance) {
-    await this.waitForAcceptCredential(record.id)
-  }
-  return record
-}
-
-
-public async issueJsonLdCredential(options?: { waitForAcceptance?: boolean }) {
-  if (!this.issuerId) {
-    throw new Error(redText('Missing issuerDid'))
-  }
-
-  const connectionRecord = await this.getConnectionRecord()
-
-  this.ui.updateBottomBar(greenText('\nSending credential offer...\n', false))
-
-  const credential = {
-    '@context': [CREDENTIALS_CONTEXT_V1_URL, 'https://www.w3.org/2018/credentials/examples/v1'],
-    type: ['VerifiableCredential', 'FaberCollege'],
-    issuer: this.issuerId,
-    issuanceDate: '2023-12-07T12:23:48Z',
-    credentialSubject: {
-      name: 'Alice Smith',
-      degree: 'Computer Science',
-    },
-  }
-
-  const record = await this.agent.credentials.offerCredential({
-    connectionId: connectionRecord.id,
-    protocolVersion: 'v2',
-    credentialFormats: {
-      jsonld: {
-        credential: credential,
-        options: {
-          proofType: 'Ed25519Signature2018',
-          proofPurpose: 'assertionMethod',
-        },
-      },
-    },
-  })
-
-  this.ui.updateBottomBar(`\nCredential offer sent!\n\n${Color.Reset}`)
-  console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
-  console.log('Go to the Alice agent to accept the credential offer\n')
-
-  if (options?.waitForAcceptance) {
-    await this.waitForAcceptCredential(record.id)
-  }
-  return record
-}
-
-=======
         console.log(redText('Abandoned\n'))
     }
   }
@@ -562,7 +403,6 @@ public async issueJsonLdCredential(options?: { waitForAcceptance?: boolean }) {
     }
     return record
   }
->>>>>>> cea78ecd (staff ad api)
 
   private async printProofFlow(print: string) {
     this.ui.updateBottomBar(print)
@@ -617,80 +457,6 @@ public async issueJsonLdCredential(options?: { waitForAcceptance?: boolean }) {
         console.log(redText('Proof request declined\n'))
         break
       case ProofState.Abandoned:
-<<<<<<< HEAD
-        console.log(redText('Abondened\n'))
-    }
-  }
-
-
-public async sendAnonCredsProofRequest() {
-  const connectionRecord = await this.getConnectionRecord()
-  const proofAttribute = await this.newProofAttribute()
-  await this.printProofFlow(greenText('\nRequesting proof...\n', false))
-
-  const request = {
-    protocolVersion: 'v2',
-    connectionId: connectionRecord.id,
-    proofFormats: {
-      anoncreds: {
-        name: 'proof-request',
-        version: '1.0',
-        requested_attributes: proofAttribute,
-      },
-    },
-  } as RequestProofOptions<V2ProofProtocol<AnonCredsProofFormatService[]>[]>
-
-  const record = await this.agent.proofs.requestProof(request)
-
-  this.ui.updateBottomBar(`\nProof request sent!\n\n${Color.Reset}`)
-
-  console.log(purpleText(`Proof request:${Color.Reset} ${JSON.stringify(request, null, 2)}`))
-  console.log(`Go to the Alice agent to accept the proof request\n`)
-
-  return record
-}
-
-public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean }) {
-  const connectionRecord = await this.getConnectionRecord();
-
-  // Adjust this to fit the JSON-LD credential you issued
-  const request = {
-    protocolVersion: 'v2',
-    connectionId: connectionRecord.id,
-    proofFormats: {
-      jsonld: {
-        presentationDefinition: {
-          id: 'degree-proof',
-          input_descriptors: [
-            {
-              id: 'degree',
-              schema: [{ uri: 'https://www.w3.org/2018/credentials#VerifiableCredential' }],
-              constraints: {
-                fields: [
-                  {
-                    path: ['$.credentialSubject.degree'],
-                    filter: { type: 'string' },
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      },
-    },
-  };
-
-  const record = await this.agent.proofs.requestProof(request as any);
-
-  this.ui.updateBottomBar(`\nJSON-LD proof request sent!\n\n${Color.Reset}`);
-
-  if (options?.waitForPresentation) {
-    await this.waitForProof(record.id);
-  }
-
-  return record;
-}
-=======
         console.log(redText('Abandoned\n'))
     }
   }
@@ -701,7 +467,7 @@ public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean })
     await this.printProofFlow(greenText('\nRequesting proof...\n', false))
 
     const request = {
-      protocolVersion: 'v2',
+      protocolVersion: 'v2' as const,
       connectionId: connectionRecord.id,
       proofFormats: {
         anoncreds: {
@@ -710,7 +476,7 @@ public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean })
           requested_attributes: proofAttribute,
         },
       },
-    } as RequestProofOptions<V2ProofProtocol<AnonCredsProofFormatService[]>[]>
+    } as RequestProofOptions<[V2ProofProtocol<[AnonCredsProofFormatService]>]>
 
     const record = await this.agent.proofs.requestProof(request)
 
@@ -731,7 +497,7 @@ public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean })
 
     // Adjust this to fit the JSON-LD credential you issued
     const request = {
-      protocolVersion: 'v2',
+      protocolVersion: 'v2' as const,
       connectionId: connectionRecord.id,
       proofFormats: {
         jsonld: {
@@ -766,7 +532,6 @@ public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean })
 
     return record;
   }
->>>>>>> cea78ecd (staff ad api)
 
   public async sendMessage(message: string) {
     const connectionRecord = await this.getConnectionRecord()
@@ -783,11 +548,4 @@ public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean })
   public async restart() {
     await this.agent.shutdown()
   }
-<<<<<<< HEAD
-
-  
-  
 }
-=======
-}
->>>>>>> cea78ecd (staff ad api)
