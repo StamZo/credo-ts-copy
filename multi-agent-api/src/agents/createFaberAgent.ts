@@ -22,16 +22,9 @@ import type {
   RegisterSchemaReturnStateFinished,
 } from '@credo-ts/anoncreds'
 
-
-import { CREDENTIALS_CONTEXT_V1_URL } from '@credo-ts/core'
-
-
-
-import { Key, KeyType, TypedArrayEncoder, utils } from '@credo-ts/core'
+import { CREDENTIALS_CONTEXT_V1_URL, TypedArrayEncoder, utils, KeyType } from '@credo-ts/core'
 
 import { IndyBesuDidCreateOptions, VerificationKeyPurpose, VerificationKeyType } from '@credo-ts/indy-besu-vdr'
-import type BottomBar from 'inquirer/lib/ui/bottom-bar'
-import { ui } from 'inquirer'
 
 import { BaseAgent, indyNetworkConfig } from './BaseAgent'
 import { Color, Output, greenText, purpleText, redText } from './OutputClass'
@@ -48,12 +41,12 @@ export class createFaberAgent extends BaseAgent {
   public schema?: RegisterSchemaReturnStateFinished
   public credentialDefinition?: RegisterCredentialDefinitionReturnStateFinished
   public issuerId?: string
-  public ui: BottomBar
+
   public didPrivateKey?: Uint8Array
 
   public constructor(port: number, name: string) {
     super({ port, name })
-    this.ui = new ui.BottomBar()
+    
   }
 
   public static async build(): Promise<createFaberAgent> {
@@ -90,7 +83,7 @@ export class createFaberAgent extends BaseAgent {
     const privateKey = crypto.randomBytes(32)
     this.didPrivateKey = new Uint8Array(privateKey)
 
-    const assertKey = await this.agent.wallet.createKey({ keyType: KeyType.Ed25519 })
+    const assertKey = await this.agent.modules.askar.createKey({ keyType: KeyType.Ed25519 })
 
     const createdDid = await this.agent.dids.create<IndyBesuDidCreateOptions>({
       method: 'ethr',
@@ -145,7 +138,7 @@ export class createFaberAgent extends BaseAgent {
       throw Error(redText(Output.MissingConnectionRecord))
     }
 
-    const [connection] = await this.agent.connections.findAllByOutOfBandId(this.outOfBandId)
+    const [connection] = await this.agent.modules.connections.findAllByOutOfBandId(this.outOfBandId)
 
     if (!connection) {
       throw Error(redText(Output.MissingConnectionRecord))
@@ -155,7 +148,7 @@ export class createFaberAgent extends BaseAgent {
   }
 
   private async printConnectionInvite() {
-    const outOfBand = await this.agent.oob.createInvitation()
+    const outOfBand = await this.agent.modules.oob.createInvitation()
     this.outOfBandId = outOfBand.id
 
     console.log(
@@ -182,7 +175,7 @@ export class createFaberAgent extends BaseAgent {
         })
 
         // Also retrieve the connection record by invitation if the event has already fired
-        void this.agent.connections.findAllByOutOfBandId(outOfBandId).then(([connectionRecord]) => {
+        void this.agent.modules.connections.findAllByOutOfBandId(outOfBandId).then(([connectionRecord]) => {
           if (connectionRecord) {
             resolve(connectionRecord)
           }
@@ -191,7 +184,7 @@ export class createFaberAgent extends BaseAgent {
 
     const connectionRecord = await getConnectionRecord(this.outOfBandId)
 
-    await this.agent.connections.returnWhenIsConnected(connectionRecord.id)
+    await this.agent.modules.connections.returnWhenIsConnected(connectionRecord.id)
     console.log(greenText(Output.ConnectionEstablished))
   }
 
@@ -333,7 +326,7 @@ export class createFaberAgent extends BaseAgent {
       throw new Error(redText('Missing anoncreds credentialDefinitionId'))
     }
     const connectionRecord = await this.getConnectionRecord()
-    this.ui.updateBottomBar(greenText('\nSending credential offer...\n', false))
+    
 
     const credential = {
       attributes: [
@@ -344,13 +337,13 @@ export class createFaberAgent extends BaseAgent {
       credentialDefinitionId: this.credentialDefinition.credentialDefinitionId,
     }
 
-    const record = await this.agent.credentials.offerCredential({
+    const record = await this.agent.modules.credentials.offerCredential({
       connectionId: connectionRecord.id,
       protocolVersion: 'v2',
       credentialFormats: { anoncreds: credential },
     })
 
-    this.ui.updateBottomBar(`\nCredential offer sent!\n\n${Color.Reset}`)
+    
     console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
     console.log('Go to the Alice agent to accept the credential offer\n')
 
@@ -367,7 +360,7 @@ export class createFaberAgent extends BaseAgent {
 
     const connectionRecord = await this.getConnectionRecord()
 
-    this.ui.updateBottomBar(greenText('\nSending credential offer...\n', false))
+    
 
     const credential = {
       '@context': [CREDENTIALS_CONTEXT_V1_URL, 'https://www.w3.org/2018/credentials/examples/v1'],
@@ -380,7 +373,7 @@ export class createFaberAgent extends BaseAgent {
       },
     }
 
-    const record = await this.agent.credentials.offerCredential({
+    const record = await this.agent.modules.credentials.offerCredential({
       connectionId: connectionRecord.id,
       protocolVersion: 'v2',
       credentialFormats: {
@@ -394,7 +387,7 @@ export class createFaberAgent extends BaseAgent {
       },
     })
 
-    this.ui.updateBottomBar(`\nCredential offer sent!\n\n${Color.Reset}`)
+    
     console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
     console.log('Go to the Alice agent to accept the credential offer\n')
 
@@ -405,7 +398,7 @@ export class createFaberAgent extends BaseAgent {
   }
 
   private async printProofFlow(print: string) {
-    this.ui.updateBottomBar(print)
+    
     await new Promise((f) => setTimeout(f, 2000))
   }
 
@@ -446,7 +439,7 @@ export class createFaberAgent extends BaseAgent {
       case ProofState.Done:
         console.log(greenText('Proof presented!\n'))
 
-        const formatData = await this.agent.proofs.getFormatData(recordId)
+        const formatData = await this.agent.modules.proofs.getFormatData(recordId)
         const revealedAttrs = formatData.presentation?.anoncreds?.requested_proof.revealed_attrs
 
         if (revealedAttrs) {
@@ -478,9 +471,9 @@ export class createFaberAgent extends BaseAgent {
       },
     } as RequestProofOptions<[V2ProofProtocol<[AnonCredsProofFormatService]>]>
 
-    const record = await this.agent.proofs.requestProof(request)
+    const record = await this.agent.modules.proofs.requestProof(request)
 
-    this.ui.updateBottomBar(`\nProof request sent!\n\n${Color.Reset}`)
+   
 
     console.log(purpleText(`Proof request:${Color.Reset} ${JSON.stringify(request, null, 2)}`))
     console.log(`Go to the Alice agent to accept the proof request\n`)
@@ -522,10 +515,9 @@ export class createFaberAgent extends BaseAgent {
       },
     };
 
-    const record = await this.agent.proofs.requestProof(request as any);
+    const record = await this.agent.modules.proofs.requestProof(request as any);
 
-    this.ui.updateBottomBar(`\nJSON-LD proof request sent!\n\n${Color.Reset}`);
-
+    
     if (options?.waitForPresentation) {
       await this.waitForProof(record.id);
     }
@@ -535,12 +527,11 @@ export class createFaberAgent extends BaseAgent {
 
   public async sendMessage(message: string) {
     const connectionRecord = await this.getConnectionRecord()
-    await this.agent.basicMessages.sendMessage(connectionRecord.id, message)
+    await this.agent.modules.basicMessages.sendMessage(connectionRecord.id, message)
   }
 
   public async exit() {
     console.log(Output.Exit)
-    await this.agent.wallet.delete()
     await this.agent.shutdown()
     process.exit(0)
   }
