@@ -22,7 +22,7 @@ import type {
   RegisterSchemaReturnStateFinished,
 } from '@credo-ts/anoncreds'
 
-import { CREDENTIALS_CONTEXT_V1_URL, TypedArrayEncoder, utils, KeyType } from '@credo-ts/core'
+import { CREDENTIALS_CONTEXT_V1_URL, TypedArrayEncoder, utils } from '@credo-ts/core'
 
 import { IndyBesuDidCreateOptions, VerificationKeyPurpose, VerificationKeyType } from '@credo-ts/indy-besu-vdr'
 
@@ -83,7 +83,7 @@ export class createFaberAgent extends BaseAgent {
     const privateKey = crypto.randomBytes(32)
     this.didPrivateKey = new Uint8Array(privateKey)
 
-    const assertKey = await this.agent.modules.askar.createKey({ keyType: KeyType.Ed25519 })
+    const assertKey = await this.agent.modules.askar.createKey({ keyType: 'ed25519' })
 
     const createdDid = await this.agent.dids.create<IndyBesuDidCreateOptions>({
       method: 'ethr',
@@ -120,16 +120,13 @@ export class createFaberAgent extends BaseAgent {
 
     const did = registry === RegistryOptions.indy ? indyDid : indyDid
 
+    // Since we're dealing with an existing DID on the ledger, we just import it
+    // The private key handling should be done separately through wallet/key management
     await this.agent.dids.import({
       did,
       overwrite: true,
-      privateKeys: [
-        {
-          keyType: KeyType.Ed25519,
-          privateKey: TypedArrayEncoder.fromString('afjdemoverysercure00000000000000'),
-        },
-      ],
     })
+    
     this.issuerId = did
   }
 
@@ -175,9 +172,10 @@ export class createFaberAgent extends BaseAgent {
         })
 
         // Also retrieve the connection record by invitation if the event has already fired
-        void this.agent.modules.connections.findAllByOutOfBandId(outOfBandId).then(([connectionRecord]) => {
-          if (connectionRecord) {
-            resolve(connectionRecord)
+        void this.agent.modules.connections.findAllByOutOfBandId(outOfBandId).then((connectionRecords: ConnectionRecord[]) => {
+          // Fix 3: Add explicit type annotation
+          if (connectionRecords && connectionRecords.length > 0) {
+            resolve(connectionRecords[0])
           }
         })
       })
@@ -278,11 +276,15 @@ export class createFaberAgent extends BaseAgent {
 
     console.log(`Credential definition registered!\n${Color.Reset}`)
 
+    if (!credentialDefinitionState.credentialDefinitionId) {
+      throw new Error('Credential definition ID not found in state')
+    }
+
     console.log(
-      purpleText(`Credential definition ID:${Color.Reset} ${this.credentialDefinition.credentialDefinitionId}\n`)
+      purpleText(`Credential definition ID:${Color.Reset} ${credentialDefinitionState.credentialDefinitionId}\n`)
     )
 
-    return this.credentialDefinition
+    return credentialDefinitionState
   }
 
   private async waitForAcceptCredential(recordId: string) {
@@ -404,12 +406,18 @@ export class createFaberAgent extends BaseAgent {
 
   private async newProofAttribute() {
     await this.printProofFlow(greenText(`Creating new proof attribute for 'name' ...\n`))
+    
+    // Fix 4: Add null check for credentialDefinition
+    if (!this.credentialDefinition) {
+      throw new Error(redText('Missing credential definition'))
+    }
+    
     const proofAttribute = {
       name: {
         name: 'name',
         restrictions: [
           {
-            cred_def_id: this.credentialDefinition?.credentialDefinitionId,
+            cred_def_id: this.credentialDefinition.credentialDefinitionId,
           },
         ],
       },
