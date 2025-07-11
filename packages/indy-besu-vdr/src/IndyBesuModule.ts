@@ -12,6 +12,9 @@ export class IndyBesuModule implements Module {
   }
 
   public register(dependencyManager: DependencyManager) {
+    // Register config
+    dependencyManager.registerInstance(IndyBesuModuleConfig, this.config)
+    
     // Only create the client if not in mock mode
     if (!this.config.skipBlockchainWrites) {
       const client = new LedgerClient(
