@@ -1,0 +1,37 @@
+{
+  "name": "multi-agent-api",
+  "version": "1.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "ts-node --transpile-only src/app.ts",
+    "start": "ts-node --transpile-only src/app.ts",
+    "build": "tsc",
+    "build:run": "tsc && node dist/app.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@credo-ts/anoncreds": "workspace:*",
+    "@credo-ts/askar": "workspace:*",
+    "@credo-ts/core": "workspace:*",
+    "@credo-ts/didcomm": "workspace:*",
+    "@credo-ts/indy-besu-vdr": "workspace:*",
+    "@credo-ts/indy-vdr": "workspace:*",
+    "@credo-ts/node": "workspace:*",
+    "@hyperledger/anoncreds-nodejs": "catalog:",
+    "@hyperledger/aries-askar-nodejs": "^0.2.3",
+    "@hyperledger/indy-vdr-nodejs": "catalog:",
+    "@openwallet-foundation/askar-nodejs": "catalog:",
+    "@openwallet-foundation/askar-shared": "catalog:",
+    "ethers": "^6.8.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "jest": "^29.5.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^5.3.3"
+  }
+}
