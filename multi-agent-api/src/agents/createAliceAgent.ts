@@ -24,8 +24,8 @@ export class createAliceAgent extends BaseAgent {
       throw Error(redText(Output.MissingConnectionRecord))
     }
     
-    // Access connections through didcomm module
-    const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+    // Access connections module directly
+    const connections = this.agent.modules.connections
     if (!connections) {
       throw Error(redText('Connections module not found'))
     }
@@ -34,8 +34,8 @@ export class createAliceAgent extends BaseAgent {
   }
 
   private async receiveConnectionRequest(invitationUrl: string) {
-    // Access out-of-band through didcomm module
-    const outOfBand = this.agent.modules.didcomm?.outOfBand || this.agent.modules.outOfBand
+    // Access out-of-band module directly
+    const outOfBand = this.agent.modules.oob || this.agent.modules.outOfBand
     if (!outOfBand) {
       throw Error(redText('OutOfBand module not found'))
     }
@@ -48,8 +48,8 @@ export class createAliceAgent extends BaseAgent {
   }
 
   private async waitForConnection(connectionRecord: ConnectionRecord) {
-    // Access connections through didcomm module
-    const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+    // Access connections module directly
+    const connections = this.agent.modules.connections
     if (!connections) {
       throw Error(redText('Connections module not found'))
     }
@@ -66,8 +66,8 @@ export class createAliceAgent extends BaseAgent {
   }
 
   public async acceptCredentialOffer(credentialRecord: CredentialExchangeRecord) {
-    // Access credentials through didcomm module
-    const credentials = this.agent.modules.didcomm?.credentials || this.agent.modules.credentials
+    // Access credentials module directly
+    const credentials = this.agent.modules.credentials
     if (!credentials) {
       throw Error(redText('Credentials module not found'))
     }
@@ -78,8 +78,8 @@ export class createAliceAgent extends BaseAgent {
   }
 
   public async acceptProofRequest(proofRecord: ProofExchangeRecord) {
-    // Access proofs through didcomm module
-    const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+    // Access proofs module directly
+    const proofs = this.agent.modules.proofs
     if (!proofs) {
       throw Error(redText('Proofs module not found'))
     }
@@ -98,8 +98,8 @@ export class createAliceAgent extends BaseAgent {
   public async sendMessage(message: string) {
     const connectionRecord = await this.getConnectionRecord()
     
-    // Access basic messages through didcomm module
-    const basicMessages = this.agent.modules.didcomm?.basicMessages || this.agent.modules.basicMessages
+    // Access basic messages module directly
+    const basicMessages = this.agent.modules.basicMessages
     if (!basicMessages) {
       throw Error(redText('BasicMessages module not found'))
     }
@@ -118,8 +118,8 @@ export class createAliceAgent extends BaseAgent {
   }
 
   public async acceptAllCredentialOffers() {
-    // Access credentials through didcomm module
-    const credentials = this.agent.modules.didcomm?.credentials || this.agent.modules.credentials
+    // Access credentials module directly
+    const credentials = this.agent.modules.credentials
     if (!credentials) {
       throw Error(redText('Credentials module not found'))
     }
@@ -131,8 +131,8 @@ export class createAliceAgent extends BaseAgent {
   }
 
   public async acceptAllProofRequests() {
-    // Access proofs through didcomm module
-    const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+    // Access proofs module directly
+    const proofs = this.agent.modules.proofs
     if (!proofs) {
       throw Error(redText('Proofs module not found'))
     }
