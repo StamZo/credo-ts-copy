@@ -100,8 +100,6 @@ export class BaseAgent {
       label: name,
       walletConfig: { id: name, key: name },
       endpoints: [endpoint],
-      // Ensure consistent endpoint configuration
-      didCommEndpoint: endpoint,
     } as InitConfig
 
     this.config = config
