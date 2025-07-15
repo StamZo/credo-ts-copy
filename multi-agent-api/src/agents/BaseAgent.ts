@@ -121,7 +121,7 @@ function getCredoModules() {
     connections: new ConnectionsModule({
       autoAcceptConnections: true,
     }),
-    outOfBand: new OutOfBandModule(),
+    oob: new OutOfBandModule(),
     basicMessages: new BasicMessagesModule(),
     w3cCredentials: new W3cCredentialsModule(),
     
