@@ -35,20 +35,42 @@ app.get('/status', (req, res) => {
 })
 
 // Connection endpoints
+
+// app.post('/connections/invite', async (req, res) => {
+//   try {
+//     // Faber creates an invitation
+//     const outOfBand = await agents.faber.agent.modules.oob.createInvitation()
+//     agents.faber.outOfBandId = outOfBand.id
+
+//     // Return invitation URL for Alice to use
+//     const inviteUrl = outOfBand.outOfBandInvitation.toUrl({ domain: `http://localhost:4000` })
+//     res.json({ inviteUrl })
+//   } catch (error) {
+//     console.error('Error creating invitation:', error)
+//     res.status(500).json({ error: (error as Error).message })
+//   }
+// })
+// Connection endpoints
 app.post('/connections/invite', async (req, res) => {
   try {
-    // Faber creates an invitation
-    const outOfBand = await agents.faber.agent.oob.createInvitation()
+    // Faber creates an invitation with proper configuration
+    const outOfBand = await agents.faber.agent.modules.outOfBand.createInvitation({
+      // Ensure we have a proper configuration for the invitation
+      multiUseInvitation: false,
+      autoAcceptConnection: true,
+    })
     agents.faber.outOfBandId = outOfBand.id
 
     // Return invitation URL for Alice to use
-    const inviteUrl = outOfBand.outOfBandInvitation.toUrl({ domain: `http://localhost:4000` })
+    const inviteUrl = outOfBand.outOfBandInvitation.toUrl({ domain: `http://localhost:9001` })
     res.json({ inviteUrl })
   } catch (error) {
     console.error('Error creating invitation:', error)
     res.status(500).json({ error: (error as Error).message })
   }
 })
+
+
 
 app.post('/connections/accept', async (req, res) => {
   try {
@@ -166,7 +188,7 @@ app.post('/credentials/accept', async (req, res) => {
 
 app.get('/credentials/:id/status', async (req, res) => {
   try {
-    const record = await agents.faber.agent.credentials.findById(req.params.id)
+    const record = await agents.faber.agent.modules.credentials.findById(req.params.id)
     res.json({ 
       id: record.id, 
       state: record.state,
@@ -228,14 +250,14 @@ app.post('/proof/accept', async (req, res) => {
 app.get('/proof/:id/status', async (req, res) => {
   try {
     const id = req.params.id
-    const record = await agents.faber.agent.proofs.findById(id)
+    const record = await agents.faber.agent.modules.proofs.findById(id)
 
     let revealedAttributes = undefined
 
     if (record.state === 'done') {
       try {
         // Get the format data
-        const formatData = await agents.faber.agent.proofs.getFormatData(id)
+        const formatData = await agents.faber.agent.modules.proofs.getFormatData(id)
         revealedAttributes = formatData.presentation?.anoncreds?.requested_proof?.revealed_attrs || {}
       } catch (formatError) {
         console.warn('Could not get format data:', formatError)
