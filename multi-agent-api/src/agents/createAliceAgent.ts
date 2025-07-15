@@ -23,24 +23,41 @@ export class createAliceAgent extends BaseAgent {
     if (!this.connectionRecordFaberId) {
       throw Error(redText(Output.MissingConnectionRecord))
     }
-    return await this.agent.modules.connections.getById(this.connectionRecordFaberId)
+    
+    // Access connections through didcomm module
+    const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+    if (!connections) {
+      throw Error(redText('Connections module not found'))
+    }
+    
+    return await connections.getById(this.connectionRecordFaberId)
   }
 
-private async receiveConnectionRequest(invitationUrl: string) {
-    const { connectionRecord } = await this.agent.modules.outOfBand.receiveInvitationFromUrl(invitationUrl)
+  private async receiveConnectionRequest(invitationUrl: string) {
+    // Access out-of-band through didcomm module
+    const outOfBand = this.agent.modules.didcomm?.outOfBand || this.agent.modules.outOfBand
+    if (!outOfBand) {
+      throw Error(redText('OutOfBand module not found'))
+    }
+    
+    const { connectionRecord } = await outOfBand.receiveInvitationFromUrl(invitationUrl)
     if (!connectionRecord) {
       throw new Error(redText(Output.NoConnectionRecordFromOutOfBand))
     }
     return connectionRecord
   }
 
-
-
   private async waitForConnection(connectionRecord: ConnectionRecord) {
-    connectionRecord = await this.agent.modules.connections.returnWhenIsConnected(connectionRecord.id)
+    // Access connections through didcomm module
+    const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+    if (!connections) {
+      throw Error(redText('Connections module not found'))
+    }
+    
+    const finalConnectionRecord = await connections.returnWhenIsConnected(connectionRecord.id)
     this.connected = true
     console.log(greenText(Output.ConnectionEstablished))
-    return connectionRecord.id
+    return finalConnectionRecord.id
   }
 
   public async acceptConnection(invitation_url: string) {
@@ -49,17 +66,29 @@ private async receiveConnectionRequest(invitationUrl: string) {
   }
 
   public async acceptCredentialOffer(credentialRecord: CredentialExchangeRecord) {
-    await this.agent.modules.credentials.acceptOffer({
+    // Access credentials through didcomm module
+    const credentials = this.agent.modules.didcomm?.credentials || this.agent.modules.credentials
+    if (!credentials) {
+      throw Error(redText('Credentials module not found'))
+    }
+    
+    await credentials.acceptOffer({
       credentialRecordId: credentialRecord.id,
     })
   }
 
   public async acceptProofRequest(proofRecord: ProofExchangeRecord) {
-    const requestedCredentials = await this.agent.modules.proofs.selectCredentialsForRequest({
+    // Access proofs through didcomm module
+    const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+    if (!proofs) {
+      throw Error(redText('Proofs module not found'))
+    }
+    
+    const requestedCredentials = await proofs.selectCredentialsForRequest({
       proofRecordId: proofRecord.id,
     })
 
-    await this.agent.modules.proofs.acceptRequest({
+    await proofs.acceptRequest({
       proofRecordId: proofRecord.id,
       proofFormats: requestedCredentials.proofFormats,
     })
@@ -68,7 +97,14 @@ private async receiveConnectionRequest(invitationUrl: string) {
 
   public async sendMessage(message: string) {
     const connectionRecord = await this.getConnectionRecord()
-    await this.agent.modules.basicMessages.sendMessage(connectionRecord.id, message)
+    
+    // Access basic messages through didcomm module
+    const basicMessages = this.agent.modules.didcomm?.basicMessages || this.agent.modules.basicMessages
+    if (!basicMessages) {
+      throw Error(redText('BasicMessages module not found'))
+    }
+    
+    await basicMessages.sendMessage(connectionRecord.id, message)
   }
 
   public async exit() {
@@ -82,14 +118,26 @@ private async receiveConnectionRequest(invitationUrl: string) {
   }
 
   public async acceptAllCredentialOffers() {
-    const records = await this.agent.modules.credentials.findAllByQuery({ state: CredentialState.OfferReceived })
+    // Access credentials through didcomm module
+    const credentials = this.agent.modules.didcomm?.credentials || this.agent.modules.credentials
+    if (!credentials) {
+      throw Error(redText('Credentials module not found'))
+    }
+    
+    const records = await credentials.findAllByQuery({ state: CredentialState.OfferReceived })
     for (const record of records) {
-      await this.agent.modules.credentials.acceptOffer({ credentialRecordId: record.id })
+      await credentials.acceptOffer({ credentialRecordId: record.id })
     }
   }
 
   public async acceptAllProofRequests() {
-    const records = await this.agent.modules.proofs.findAllByQuery({ state: ProofState.RequestReceived })
+    // Access proofs through didcomm module
+    const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+    if (!proofs) {
+      throw Error(redText('Proofs module not found'))
+    }
+    
+    const records = await proofs.findAllByQuery({ state: ProofState.RequestReceived })
     for (const record of records) {
       await this.acceptProofRequest(record)
     }
