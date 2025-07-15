@@ -44,17 +44,47 @@ app.post('/connections/invite', async (req, res) => {
       return res.status(500).json({ error: 'OutOfBand module not found' })
     }
 
-    // Faber creates an invitation with proper configuration
+    // Create invitation without custom routing to avoid keyId issues
     const outOfBandRecord = await outOfBand.createInvitation({
       multiUseInvitation: false,
-      autoAcceptConnection: true,
+      autoAcceptConnection: false,
     })
     
     agents.faber.outOfBandId = outOfBandRecord.id
 
-    // Return invitation URL for Alice to use
-    const inviteUrl = outOfBandRecord.outOfBandInvitation.toUrl({ domain: `http://localhost:9001` })
-    res.json({ inviteUrl })
+    // Get the invitation and modify it to add serviceEndpoint
+    const invitation = outOfBandRecord.outOfBandInvitation
+    const serviceEndpoint = `http://localhost:${agents.faber.port}`
+    
+    // Manually patch the services to include serviceEndpoint with proper formatting
+    if (invitation.services && invitation.services.length > 0) {
+      invitation.services = invitation.services.map((service: any) => {
+        // Ensure the service has all required properties with proper types
+        return {
+          id: service.id || '#inline-0',
+          type: 'did-communication',
+          serviceEndpoint: serviceEndpoint, // Ensure it's a clean string
+          recipientKeys: service.recipientKeys || [],
+          routingKeys: service.routingKeys || []
+        }
+      })
+    }
+
+    // Create new invitation URL with the modified invitation
+    const inviteUrl = invitation.toUrl({ 
+      domain: serviceEndpoint
+    })
+    
+    res.json({ 
+      inviteUrl,
+      outOfBandId: outOfBandRecord.id,
+      invitation: invitation,
+      debug: {
+        serviceEndpoint,
+        servicesCount: invitation.services?.length || 0,
+        hasServiceEndpoint: invitation.services?.[0]?.serviceEndpoint ? 'yes' : 'no'
+      }
+    })
   } catch (error) {
     console.error('Error creating invitation:', error)
     res.status(500).json({ error: (error as Error).message })
