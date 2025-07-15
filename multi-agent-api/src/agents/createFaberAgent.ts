@@ -144,8 +144,18 @@ export class createFaberAgent extends BaseAgent {
     return connection
   }
 
-  private async printConnectionInvite() {
-    const outOfBand = await this.agent.modules.oob.createInvitation()
+// private async printConnectionInvite() {
+//     const outOfBand = await this.agent.modules.oob.createInvitation()
+//     this.outOfBandId = outOfBand.id
+
+//     console.log(
+//       Output.ConnectionLink,
+//       outOfBand.outOfBandInvitation.toUrl({ domain: `http://localhost:${this.port}` }),
+//       '\n'
+//     )
+//   }
+private async printConnectionInvite() {
+    const outOfBand = await this.agent.modules.outOfBand.createInvitation()
     this.outOfBandId = outOfBand.id
 
     console.log(
@@ -154,6 +164,7 @@ export class createFaberAgent extends BaseAgent {
       '\n'
     )
   }
+
 
   private async waitForConnection() {
     if (!this.outOfBandId) {
