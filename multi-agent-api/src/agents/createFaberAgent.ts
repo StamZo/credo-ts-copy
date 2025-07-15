@@ -133,8 +133,8 @@ export class createFaberAgent extends BaseAgent {
       throw Error(redText(Output.MissingConnectionRecord))
     }
 
-    // Access connections through didcomm module
-    const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+    // Access connections module directly
+    const connections = this.agent.modules.connections
     if (!connections) {
       throw Error(redText('Connections module not found'))
     }
@@ -149,8 +149,8 @@ export class createFaberAgent extends BaseAgent {
   }
 
   private async printConnectionInvite() {
-    // Access out-of-band through didcomm module
-    const outOfBand = this.agent.modules.didcomm?.outOfBand || this.agent.modules.outOfBand
+    // Access out-of-band module directly
+    const outOfBand = this.agent.modules.oob || this.agent.modules.outOfBand
     if (!outOfBand) {
       throw Error(redText('OutOfBand module not found'))
     }
@@ -182,7 +182,7 @@ export class createFaberAgent extends BaseAgent {
         })
 
         // Also retrieve the connection record by invitation if the event has already fired
-        const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+        const connections = this.agent.modules.connections
         if (!connections) {
           reject(new Error('Connections module not found'))
           return
@@ -197,8 +197,8 @@ export class createFaberAgent extends BaseAgent {
 
     const connectionRecord = await getConnectionRecord(this.outOfBandId)
 
-    // Access connections through didcomm module
-    const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+    // Access connections module directly
+    const connections = this.agent.modules.connections
     if (!connections) {
       throw Error(redText('Connections module not found'))
     }
@@ -350,8 +350,8 @@ export class createFaberAgent extends BaseAgent {
     }
     const connectionRecord = await this.getConnectionRecord()
     
-    // Access credentials through didcomm module
-    const credentials = this.agent.modules.didcomm?.credentials || this.agent.modules.credentials
+    // Access credentials module directly
+    const credentials = this.agent.modules.credentials
     if (!credentials) {
       throw Error(redText('Credentials module not found'))
     }
@@ -387,8 +387,8 @@ export class createFaberAgent extends BaseAgent {
 
     const connectionRecord = await this.getConnectionRecord()
 
-    // Access credentials through didcomm module
-    const credentials = this.agent.modules.didcomm?.credentials || this.agent.modules.credentials
+    // Access credentials module directly
+    const credentials = this.agent.modules.credentials
     if (!credentials) {
       throw Error(redText('Credentials module not found'))
     }
@@ -473,8 +473,8 @@ export class createFaberAgent extends BaseAgent {
       case ProofState.Done:
         console.log(greenText('Proof presented!\n'))
 
-        // Access proofs through didcomm module
-        const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+        // Access proofs module directly
+        const proofs = this.agent.modules.proofs
         if (!proofs) {
           throw Error(redText('Proofs module not found'))
         }
@@ -499,8 +499,8 @@ export class createFaberAgent extends BaseAgent {
     const proofAttribute = await this.newProofAttribute()
     await this.printProofFlow(greenText('\nRequesting proof...\n', false))
 
-    // Access proofs through didcomm module
-    const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+    // Access proofs module directly
+    const proofs = this.agent.modules.proofs
     if (!proofs) {
       throw Error(redText('Proofs module not found'))
     }
@@ -532,8 +532,8 @@ export class createFaberAgent extends BaseAgent {
   public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean }) {
     const connectionRecord = await this.getConnectionRecord();
 
-    // Access proofs through didcomm module
-    const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+    // Access proofs module directly
+    const proofs = this.agent.modules.proofs
     if (!proofs) {
       throw Error(redText('Proofs module not found'))
     }
@@ -577,8 +577,8 @@ export class createFaberAgent extends BaseAgent {
   public async sendMessage(message: string) {
     const connectionRecord = await this.getConnectionRecord()
     
-    // Access basic messages through didcomm module
-    const basicMessages = this.agent.modules.didcomm?.basicMessages || this.agent.modules.basicMessages
+    // Access basic messages module directly
+    const basicMessages = this.agent.modules.basicMessages
     if (!basicMessages) {
       throw Error(redText('BasicMessages module not found'))
     }
