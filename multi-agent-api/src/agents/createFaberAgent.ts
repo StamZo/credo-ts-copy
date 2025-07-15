@@ -22,13 +22,12 @@ import type {
   RegisterSchemaReturnStateFinished,
 } from '@credo-ts/anoncreds'
 
-import { CREDENTIALS_CONTEXT_V1_URL, TypedArrayEncoder, utils } from '@credo-ts/core'
+import { CREDENTIALS_CONTEXT_V1_URL, utils } from '@credo-ts/core'
 
 import { IndyBesuDidCreateOptions, VerificationKeyPurpose, VerificationKeyType } from '@credo-ts/indy-besu-vdr'
 
 import { BaseAgent, indyNetworkConfig } from './BaseAgent'
 import { Color, Output, greenText, purpleText, redText } from './OutputClass'
-//import { computeAddress } from 'ethers'
 import crypto from 'crypto'
 
 export enum RegistryOptions {
@@ -46,7 +45,6 @@ export class createFaberAgent extends BaseAgent {
 
   public constructor(port: number, name: string) {
     super({ port, name })
-    
   }
 
   public static async build(): Promise<createFaberAgent> {
@@ -135,36 +133,37 @@ export class createFaberAgent extends BaseAgent {
       throw Error(redText(Output.MissingConnectionRecord))
     }
 
-    const [connection] = await this.agent.modules.connections.findAllByOutOfBandId(this.outOfBandId)
+    // Access connections through didcomm module
+    const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+    if (!connections) {
+      throw Error(redText('Connections module not found'))
+    }
 
-    if (!connection) {
+    const connection = await connections.findAllByOutOfBandId(this.outOfBandId)
+
+    if (!connection || connection.length === 0) {
       throw Error(redText(Output.MissingConnectionRecord))
     }
 
-    return connection
+    return connection[0]
   }
 
-// private async printConnectionInvite() {
-//     const outOfBand = await this.agent.modules.oob.createInvitation()
-//     this.outOfBandId = outOfBand.id
+  private async printConnectionInvite() {
+    // Access out-of-band through didcomm module
+    const outOfBand = this.agent.modules.didcomm?.outOfBand || this.agent.modules.outOfBand
+    if (!outOfBand) {
+      throw Error(redText('OutOfBand module not found'))
+    }
 
-//     console.log(
-//       Output.ConnectionLink,
-//       outOfBand.outOfBandInvitation.toUrl({ domain: `http://localhost:${this.port}` }),
-//       '\n'
-//     )
-//   }
-private async printConnectionInvite() {
-    const outOfBand = await this.agent.modules.outOfBand.createInvitation()
-    this.outOfBandId = outOfBand.id
+    const outOfBandRecord = await outOfBand.createInvitation()
+    this.outOfBandId = outOfBandRecord.id
 
     console.log(
       Output.ConnectionLink,
-      outOfBand.outOfBandInvitation.toUrl({ domain: `http://localhost:${this.port}` }),
+      outOfBandRecord.outOfBandInvitation.toUrl({ domain: `http://localhost:${this.port}` }),
       '\n'
     )
   }
-
 
   private async waitForConnection() {
     if (!this.outOfBandId) {
@@ -183,8 +182,13 @@ private async printConnectionInvite() {
         })
 
         // Also retrieve the connection record by invitation if the event has already fired
-        void this.agent.modules.connections.findAllByOutOfBandId(outOfBandId).then((connectionRecords: ConnectionRecord[]) => {
-          // Fix 3: Add explicit type annotation
+        const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+        if (!connections) {
+          reject(new Error('Connections module not found'))
+          return
+        }
+
+        void connections.findAllByOutOfBandId(outOfBandId).then((connectionRecords: ConnectionRecord[]) => {
           if (connectionRecords && connectionRecords.length > 0) {
             resolve(connectionRecords[0])
           }
@@ -193,7 +197,13 @@ private async printConnectionInvite() {
 
     const connectionRecord = await getConnectionRecord(this.outOfBandId)
 
-    await this.agent.modules.connections.returnWhenIsConnected(connectionRecord.id)
+    // Access connections through didcomm module
+    const connections = this.agent.modules.didcomm?.connections || this.agent.modules.connections
+    if (!connections) {
+      throw Error(redText('Connections module not found'))
+    }
+
+    await connections.returnWhenIsConnected(connectionRecord.id)
     console.log(greenText(Output.ConnectionEstablished))
   }
 
@@ -340,6 +350,11 @@ private async printConnectionInvite() {
     }
     const connectionRecord = await this.getConnectionRecord()
     
+    // Access credentials through didcomm module
+    const credentials = this.agent.modules.didcomm?.credentials || this.agent.modules.credentials
+    if (!credentials) {
+      throw Error(redText('Credentials module not found'))
+    }
 
     const credential = {
       attributes: [
@@ -350,13 +365,12 @@ private async printConnectionInvite() {
       credentialDefinitionId: this.credentialDefinition.credentialDefinitionId,
     }
 
-    const record = await this.agent.modules.credentials.offerCredential({
+    const record = await credentials.offerCredential({
       connectionId: connectionRecord.id,
       protocolVersion: 'v2',
       credentialFormats: { anoncreds: credential },
     })
 
-    
     console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
     console.log('Go to the Alice agent to accept the credential offer\n')
 
@@ -373,7 +387,11 @@ private async printConnectionInvite() {
 
     const connectionRecord = await this.getConnectionRecord()
 
-    
+    // Access credentials through didcomm module
+    const credentials = this.agent.modules.didcomm?.credentials || this.agent.modules.credentials
+    if (!credentials) {
+      throw Error(redText('Credentials module not found'))
+    }
 
     const credential = {
       '@context': [CREDENTIALS_CONTEXT_V1_URL, 'https://www.w3.org/2018/credentials/examples/v1'],
@@ -386,7 +404,7 @@ private async printConnectionInvite() {
       },
     }
 
-    const record = await this.agent.modules.credentials.offerCredential({
+    const record = await credentials.offerCredential({
       connectionId: connectionRecord.id,
       protocolVersion: 'v2',
       credentialFormats: {
@@ -400,7 +418,6 @@ private async printConnectionInvite() {
       },
     })
 
-    
     console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
     console.log('Go to the Alice agent to accept the credential offer\n')
 
@@ -411,14 +428,12 @@ private async printConnectionInvite() {
   }
 
   private async printProofFlow(print: string) {
-    
     await new Promise((f) => setTimeout(f, 2000))
   }
 
   private async newProofAttribute() {
     await this.printProofFlow(greenText(`Creating new proof attribute for 'name' ...\n`))
     
-    // Fix 4: Add null check for credentialDefinition
     if (!this.credentialDefinition) {
       throw new Error(redText('Missing credential definition'))
     }
@@ -458,7 +473,13 @@ private async printConnectionInvite() {
       case ProofState.Done:
         console.log(greenText('Proof presented!\n'))
 
-        const formatData = await this.agent.modules.proofs.getFormatData(recordId)
+        // Access proofs through didcomm module
+        const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+        if (!proofs) {
+          throw Error(redText('Proofs module not found'))
+        }
+
+        const formatData = await proofs.getFormatData(recordId)
         const revealedAttrs = formatData.presentation?.anoncreds?.requested_proof.revealed_attrs
 
         if (revealedAttrs) {
@@ -478,6 +499,12 @@ private async printConnectionInvite() {
     const proofAttribute = await this.newProofAttribute()
     await this.printProofFlow(greenText('\nRequesting proof...\n', false))
 
+    // Access proofs through didcomm module
+    const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+    if (!proofs) {
+      throw Error(redText('Proofs module not found'))
+    }
+
     const request = {
       protocolVersion: 'v2' as const,
       connectionId: connectionRecord.id,
@@ -490,9 +517,7 @@ private async printConnectionInvite() {
       },
     } as RequestProofOptions<[V2ProofProtocol<[AnonCredsProofFormatService]>]>
 
-    const record = await this.agent.modules.proofs.requestProof(request)
-
-   
+    const record = await proofs.requestProof(request)
 
     console.log(purpleText(`Proof request:${Color.Reset} ${JSON.stringify(request, null, 2)}`))
     console.log(`Go to the Alice agent to accept the proof request\n`)
@@ -506,6 +531,12 @@ private async printConnectionInvite() {
 
   public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean }) {
     const connectionRecord = await this.getConnectionRecord();
+
+    // Access proofs through didcomm module
+    const proofs = this.agent.modules.didcomm?.proofs || this.agent.modules.proofs
+    if (!proofs) {
+      throw Error(redText('Proofs module not found'))
+    }
 
     // Adjust this to fit the JSON-LD credential you issued
     const request = {
@@ -534,9 +565,8 @@ private async printConnectionInvite() {
       },
     };
 
-    const record = await this.agent.modules.proofs.requestProof(request as any);
+    const record = await proofs.requestProof(request as any);
 
-    
     if (options?.waitForPresentation) {
       await this.waitForProof(record.id);
     }
@@ -546,7 +576,14 @@ private async printConnectionInvite() {
 
   public async sendMessage(message: string) {
     const connectionRecord = await this.getConnectionRecord()
-    await this.agent.modules.basicMessages.sendMessage(connectionRecord.id, message)
+    
+    // Access basic messages through didcomm module
+    const basicMessages = this.agent.modules.didcomm?.basicMessages || this.agent.modules.basicMessages
+    if (!basicMessages) {
+      throw Error(redText('BasicMessages module not found'))
+    }
+    
+    await basicMessages.sendMessage(connectionRecord.id, message)
   }
 
   public async exit() {
