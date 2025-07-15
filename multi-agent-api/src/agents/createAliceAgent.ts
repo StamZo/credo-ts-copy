@@ -26,13 +26,15 @@ export class createAliceAgent extends BaseAgent {
     return await this.agent.modules.connections.getById(this.connectionRecordFaberId)
   }
 
-  private async receiveConnectionRequest(invitationUrl: string) {
-    const { connectionRecord } = await this.agent.modules.oob.receiveInvitationFromUrl(invitationUrl)
+private async receiveConnectionRequest(invitationUrl: string) {
+    const { connectionRecord } = await this.agent.modules.outOfBand.receiveInvitationFromUrl(invitationUrl)
     if (!connectionRecord) {
       throw new Error(redText(Output.NoConnectionRecordFromOutOfBand))
     }
     return connectionRecord
   }
+
+
 
   private async waitForConnection(connectionRecord: ConnectionRecord) {
     connectionRecord = await this.agent.modules.connections.returnWhenIsConnected(connectionRecord.id)
