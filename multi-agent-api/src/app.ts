@@ -35,61 +35,64 @@ app.get('/status', (req, res) => {
 })
 
 // Connection endpoints
+
+// Connection endpoints
+// Connection endpoints
 app.post('/connections/invite', async (req, res) => {
   try {
-    // Access the out-of-band module directly from the agent's modules
+    const endpoint = `http://localhost:${agents.faber.port}`
+    
+    // Access the out-of-band module
     const outOfBand = agents.faber.agent.modules.oob || agents.faber.agent.modules.outOfBand
     
     if (!outOfBand) {
       return res.status(500).json({ error: 'OutOfBand module not found' })
     }
-
-    // Create invitation without custom routing to avoid keyId issues
+    
+    // Create invitation
     const outOfBandRecord = await outOfBand.createInvitation({
       multiUseInvitation: false,
       autoAcceptConnection: false,
+      handshake: true,
+      label: 'Faber Agent',
+      handshakeProtocols: ['https://didcomm.org/connections/1.0'],
     })
     
     agents.faber.outOfBandId = outOfBandRecord.id
 
-    // Get the invitation and modify it to add serviceEndpoint
-    const invitation = outOfBandRecord.outOfBandInvitation
-    const serviceEndpoint = `http://localhost:${agents.faber.port}`
+    // Get the invitation object
+    const invitation = outOfBandRecord.outOfBandInvitation.toJSON()
     
-    // Manually patch the services to include serviceEndpoint with proper formatting
-    if (invitation.services && invitation.services.length > 0) {
+    // Fix the services to include serviceEndpoint
+    if (invitation.services && Array.isArray(invitation.services)) {
       invitation.services = invitation.services.map((service: any) => {
-        // Ensure the service has all required properties with proper types
-        return {
-          id: service.id || '#inline-0',
-          type: 'did-communication',
-          serviceEndpoint: serviceEndpoint, // Ensure it's a clean string
-          recipientKeys: service.recipientKeys || [],
-          routingKeys: service.routingKeys || []
+        if (service.type === 'did-communication' && !service.serviceEndpoint) {
+          return {
+            ...service,
+            serviceEndpoint: endpoint
+          }
         }
+        return service
       })
     }
-
-    // Create new invitation URL with the modified invitation
-    const inviteUrl = invitation.toUrl({ 
-      domain: serviceEndpoint
-    })
+    
+    // Encode the fixed invitation
+    const encodedInvitation = Buffer.from(JSON.stringify(invitation)).toString('base64')
+    const inviteUrl = `${endpoint}?oob=${encodedInvitation}`
+    
+    console.log('Created invitation with services:', JSON.stringify(invitation.services, null, 2))
     
     res.json({ 
       inviteUrl,
       outOfBandId: outOfBandRecord.id,
       invitation: invitation,
-      debug: {
-        serviceEndpoint,
-        servicesCount: invitation.services?.length || 0,
-        hasServiceEndpoint: invitation.services?.[0]?.serviceEndpoint ? 'yes' : 'no'
-      }
     })
   } catch (error) {
     console.error('Error creating invitation:', error)
     res.status(500).json({ error: (error as Error).message })
   }
 })
+
 
 app.post('/connections/accept', async (req, res) => {
   try {
@@ -98,15 +101,70 @@ app.post('/connections/accept', async (req, res) => {
       return res.status(400).json({ error: 'inviteUrl is required' })
     }
     
+    console.log('Alice accepting invitation:', inviteUrl)
+    
     // Alice accepts the invitation
     await agents.alice.acceptConnection(inviteUrl)
     res.json({ status: 'Alice connected to Faber!' })
   } catch (error) {
     console.error('Error accepting connection:', error)
-    res.status(500).json({ error: (error as Error).message })
+    res.status(500).json({ 
+      error: (error as Error).message,
+      stack: (error as Error).stack 
+    })
   }
 })
-
+// app.post('/connections/accept', async (req, res) => {
+//   try {
+//     const { inviteUrl } = req.body
+//     if (!inviteUrl) {
+//       return res.status(400).json({ error: 'inviteUrl is required' })
+//     }
+    
+//     // Debug the invitation before processing
+//     console.log('🔍 Debugging invitation URL:', inviteUrl)
+    
+//     try {
+//       // Parse the invitation manually to inspect it
+//       const url = new URL(inviteUrl)
+//       const oobParam = url.searchParams.get('oob') || url.searchParams.get('_oob')
+//       if (oobParam) {
+//         const decodedInvitation = JSON.parse(Buffer.from(oobParam, 'base64').toString())
+//         console.log('📋 Decoded invitation:', JSON.stringify(decodedInvitation, null, 2))
+        
+//         // Check services
+//         if (decodedInvitation.services) {
+//           decodedInvitation.services.forEach((service: any, index: number) => {
+//             console.log(`🔧 Service ${index}:`, {
+//               id: service.id,
+//               type: service.type,
+//               serviceEndpoint: service.serviceEndpoint,
+//               hasRecipientKeys: !!service.recipientKeys?.length
+//             })
+            
+//             // Test the URI validation regex manually
+//             const uriRegex = /\w+:(\/?\/?)[^\s]+/
+//             const isValid = uriRegex.test(service.serviceEndpoint)
+//             console.log(`✅ URI validation for "${service.serviceEndpoint}": ${isValid}`)
+//           })
+//         }
+//       }
+//     } catch (parseError) {
+//       console.warn('⚠️ Could not parse invitation for debugging:', parseError)
+//     }
+    
+//     // Attempt the connection
+//     await agents.alice.acceptConnection(inviteUrl)
+//     res.json({ status: 'Alice connected to Faber!' })
+    
+//   } catch (error) {
+//     console.error('❌ Connection acceptance error:', error)
+//     res.status(500).json({ 
+//       error: (error as Error).message,
+//       stack: (error as Error).stack
+//     })
+//   }
+// })
 // DID endpoints
 app.post('/agent/create-did', async (req, res) => {
   try {
