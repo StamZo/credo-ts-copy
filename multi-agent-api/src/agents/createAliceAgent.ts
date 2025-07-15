@@ -34,13 +34,19 @@ export class createAliceAgent extends BaseAgent {
   }
 
   private async receiveConnectionRequest(invitationUrl: string) {
-    // Access out-of-band module directly
-    const outOfBand = this.agent.modules.oob || this.agent.modules.outOfBand
-    if (!outOfBand) {
-      throw Error(redText('OutOfBand module not found'))
-    }
-    
-    const { connectionRecord } = await outOfBand.receiveInvitationFromUrl(invitationUrl)
+  console.log('🔍 Alice receiving invitation URL:', invitationUrl)
+  
+  // Decode and inspect the invitation
+  const url = new URL(invitationUrl)
+  const oobParam = url.searchParams.get('oob')
+  if (oobParam) {
+    const invitation = JSON.parse(Buffer.from(oobParam, 'base64').toString())
+    console.log('🔍 Decoded invitation services:', invitation.services)
+  }
+  
+  const outOfBand = this.agent.modules.oob || this.agent.modules.outOfBand
+  const { connectionRecord } = await outOfBand.receiveInvitationFromUrl(invitationUrl)
+  
     if (!connectionRecord) {
       throw new Error(redText(Output.NoConnectionRecordFromOutOfBand))
     }
@@ -60,9 +66,16 @@ export class createAliceAgent extends BaseAgent {
     return finalConnectionRecord.id
   }
 
-  public async acceptConnection(invitation_url: string) {
-    const connectionRecord = await this.receiveConnectionRequest(invitation_url)
-    this.connectionRecordFaberId = await this.waitForConnection(connectionRecord)
+public async acceptConnection(invitation_url: string) {
+    try {
+      console.log('Alice receiving invitation URL:', invitation_url)
+      
+      const connectionRecord = await this.receiveConnectionRequest(invitation_url)
+      this.connectionRecordFaberId = await this.waitForConnection(connectionRecord)
+    } catch (error) {
+      console.error('Error in acceptConnection:', error)
+      throw error
+    }
   }
 
   public async acceptCredentialOffer(credentialRecord: CredentialExchangeRecord) {
