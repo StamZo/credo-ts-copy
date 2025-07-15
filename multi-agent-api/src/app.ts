@@ -37,8 +37,8 @@ app.get('/status', (req, res) => {
 // Connection endpoints
 app.post('/connections/invite', async (req, res) => {
   try {
-    // Access the out-of-band module through the didcomm module
-    const outOfBand = agents.faber.agent.modules.didcomm?.outOfBand || agents.faber.agent.modules.outOfBand
+    // Access the out-of-band module directly from the agent's modules
+    const outOfBand = agents.faber.agent.modules.oob || agents.faber.agent.modules.outOfBand
     
     if (!outOfBand) {
       return res.status(500).json({ error: 'OutOfBand module not found' })
@@ -177,8 +177,8 @@ app.post('/credentials/accept', async (req, res) => {
 
 app.get('/credentials/:id/status', async (req, res) => {
   try {
-    // Access credentials module through didcomm
-    const credentials = agents.faber.agent.modules.didcomm?.credentials || agents.faber.agent.modules.credentials
+    // Access credentials module directly from the agent's modules
+    const credentials = agents.faber.agent.modules.credentials
     
     if (!credentials) {
       return res.status(500).json({ error: 'Credentials module not found' })
@@ -247,8 +247,8 @@ app.get('/proof/:id/status', async (req, res) => {
   try {
     const id = req.params.id
     
-    // Access proofs module through didcomm
-    const proofs = agents.faber.agent.modules.didcomm?.proofs || agents.faber.agent.modules.proofs
+    // Access proofs module directly from the agent's modules
+    const proofs = agents.faber.agent.modules.proofs
     
     if (!proofs) {
       return res.status(500).json({ error: 'Proofs module not found' })
