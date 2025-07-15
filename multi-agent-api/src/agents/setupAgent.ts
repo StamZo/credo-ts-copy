@@ -7,9 +7,9 @@ import { DidsModule } from '@credo-ts/core'
 
 export async function setupAgent(): Promise<Agent> {
   const agent = new Agent({
-        config: {
-      label: 'consentis-agent',
-      logger: new ConsoleLogger(LogLevel.info),
+      config: {
+        label: 'consentis-agent',
+        logger: new ConsoleLogger(LogLevel.info),
     },
 
     dependencies: agentDependencies,
