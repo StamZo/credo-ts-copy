@@ -70,6 +70,7 @@ export const indyNetworkConfig: IndyVdrPoolConfig = {
 
 type DemoAgent = Agent<any>
 
+
 export class BaseAgent {
   public port: number
   public name: string
@@ -86,10 +87,21 @@ export class BaseAgent {
     this.name = name
     this.port = port
 
+    // Ensure the endpoint URL is properly formatted and valid
+    const endpoint = `http://localhost:${port}`
+    
+    // Validate the endpoint format before using it
+    const urlRegex = /^https?:\/\/[^\s]+$/
+    if (!urlRegex.test(endpoint)) {
+      throw new Error(`Invalid endpoint format: ${endpoint}`)
+    }
+    
     const config = {
       label: name,
       walletConfig: { id: name, key: name },
-      endpoints: [`http://localhost:${port}`],
+      endpoints: [endpoint],
+      // Ensure consistent endpoint configuration
+      didCommEndpoint: endpoint,
     } as InitConfig
 
     this.config = config
@@ -121,13 +133,15 @@ function getCredoModules() {
     didcomm: new DidCommModule(),
     
     connections: new ConnectionsModule({
-      autoAcceptConnections: true,
+      // Remove autoAcceptConnections to require manual acceptance
+      autoAcceptConnections: false,
     }),
     oob: new OutOfBandModule(),
     basicMessages: new BasicMessagesModule(),
     w3cCredentials: new W3cCredentialsModule(),
     
     credentials: new CredentialsModule({
+      // Keep auto-accept for credentials for easier testing
       autoAcceptCredentials: AutoAcceptCredential.ContentApproved,
       credentialProtocols: [
         new V1CredentialProtocol({
@@ -143,6 +157,7 @@ function getCredoModules() {
     }),
     
     proofs: new ProofsModule({
+      // Keep auto-accept for proofs for easier testing
       autoAcceptProofs: AutoAcceptProof.ContentApproved,
       proofProtocols: [
         new V1ProofProtocol({
@@ -164,6 +179,7 @@ function getCredoModules() {
     
     askar: new AskarModule({
       askar,
+      // Properly configure the wallet store
       store: {
         id: 'default',
         key: 'defaultkey',
