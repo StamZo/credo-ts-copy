@@ -6,23 +6,21 @@ import {
   CredentialEventTypes,
   CredentialState,
   CredentialStateChangedEvent,
-  ConnectionEventTypes, ConnectionStateChangedEvent 
-} from '@credo-ts/didcomm'
-
-import type { 
+  ConnectionEventTypes, 
+  ConnectionStateChangedEvent,
   ConnectionRecord, 
   CredentialExchangeRecord, 
   ProofExchangeRecord,
   RequestProofOptions,
-} from '@credo-ts/didcomm'
+  CREDENTIALS_CONTEXT_V1_URL, 
+  utils
+} from '@credo-ts/core'
 
 import type {
   AnonCredsProofFormatService,
   RegisterCredentialDefinitionReturnStateFinished,
   RegisterSchemaReturnStateFinished,
 } from '@credo-ts/anoncreds'
-
-import { CREDENTIALS_CONTEXT_V1_URL, utils } from '@credo-ts/core'
 
 import { IndyBesuDidCreateOptions, VerificationKeyPurpose, VerificationKeyType } from '@credo-ts/indy-besu-vdr'
 
@@ -61,7 +59,7 @@ export class createFaberAgent extends BaseAgent {
     const createdDid = await this.agent.dids.create<IndyBesuDidCreateOptions>({ 
       method: 'ethr',
       secret: {
-        didPrivateKey: privateKey,
+        didPrivateKey: new Uint8Array(privateKey),
       },
     })
 
@@ -95,7 +93,7 @@ export class createFaberAgent extends BaseAgent {
         ],
       },
       secret: {
-        didPrivateKey: privateKey,
+        didPrivateKey: new Uint8Array(privateKey),
       },
     })
 
@@ -133,13 +131,8 @@ export class createFaberAgent extends BaseAgent {
       throw Error(redText(Output.MissingConnectionRecord))
     }
 
-    // Access connections module directly
-    const connections = this.agent.modules.connections
-    if (!connections) {
-      throw Error(redText('Connections module not found'))
-    }
-
-    const connection = await connections.findAllByOutOfBandId(this.outOfBandId)
+    // Access connections directly on agent
+    const connection = await this.agent.connections.findAllByOutOfBandId(this.outOfBandId)
 
     if (!connection || connection.length === 0) {
       throw Error(redText(Output.MissingConnectionRecord))
@@ -149,13 +142,8 @@ export class createFaberAgent extends BaseAgent {
   }
 
   private async printConnectionInvite() {
-    // Access out-of-band module directly
-    const outOfBand = this.agent.modules.oob || this.agent.modules.outOfBand
-    if (!outOfBand) {
-      throw Error(redText('OutOfBand module not found'))
-    }
-
-    const outOfBandRecord = await outOfBand.createInvitation()
+    // Access oob (out-of-band) directly on agent
+    const outOfBandRecord = await this.agent.oob.createInvitation()
     this.outOfBandId = outOfBandRecord.id
 
     console.log(
@@ -182,13 +170,7 @@ export class createFaberAgent extends BaseAgent {
         })
 
         // Also retrieve the connection record by invitation if the event has already fired
-        const connections = this.agent.modules.connections
-        if (!connections) {
-          reject(new Error('Connections module not found'))
-          return
-        }
-
-        void connections.findAllByOutOfBandId(outOfBandId).then((connectionRecords: ConnectionRecord[]) => {
+        void this.agent.connections.findAllByOutOfBandId(outOfBandId).then((connectionRecords: ConnectionRecord[]) => {
           if (connectionRecords && connectionRecords.length > 0) {
             resolve(connectionRecords[0])
           }
@@ -196,14 +178,7 @@ export class createFaberAgent extends BaseAgent {
       })
 
     const connectionRecord = await getConnectionRecord(this.outOfBandId)
-
-    // Access connections module directly
-    const connections = this.agent.modules.connections
-    if (!connections) {
-      throw Error(redText('Connections module not found'))
-    }
-
-    await connections.returnWhenIsConnected(connectionRecord.id)
+    await this.agent.connections.returnWhenIsConnected(connectionRecord.id)
     console.log(greenText(Output.ConnectionEstablished))
   }
 
@@ -241,6 +216,7 @@ export class createFaberAgent extends BaseAgent {
       schema: schemaTemplate,
       options: {
         secretKey: this.didPrivateKey,
+        supportRevocation: false,
       },
     })
 
@@ -350,12 +326,7 @@ export class createFaberAgent extends BaseAgent {
     }
     const connectionRecord = await this.getConnectionRecord()
     
-    // Access credentials module directly
-    const credentials = this.agent.modules.credentials
-    if (!credentials) {
-      throw Error(redText('Credentials module not found'))
-    }
-
+    // Access credentials directly on agent
     const credential = {
       attributes: [
         { name: 'name', value: 'Alice Smith' },
@@ -365,7 +336,7 @@ export class createFaberAgent extends BaseAgent {
       credentialDefinitionId: this.credentialDefinition.credentialDefinitionId,
     }
 
-    const record = await credentials.offerCredential({
+    const record = await this.agent.credentials.offerCredential({
       connectionId: connectionRecord.id,
       protocolVersion: 'v2',
       credentialFormats: { anoncreds: credential },
@@ -381,50 +352,7 @@ export class createFaberAgent extends BaseAgent {
   }
 
   public async issueJsonLdCredential(options?: { waitForAcceptance?: boolean }) {
-    if (!this.issuerId) {
-      throw new Error(redText('Missing issuerDid'))
-    }
-
-    const connectionRecord = await this.getConnectionRecord()
-
-    // Access credentials module directly
-    const credentials = this.agent.modules.credentials
-    if (!credentials) {
-      throw Error(redText('Credentials module not found'))
-    }
-
-    const credential = {
-      '@context': [CREDENTIALS_CONTEXT_V1_URL, 'https://www.w3.org/2018/credentials/examples/v1'],
-      type: ['VerifiableCredential', 'FaberCollege'],
-      issuer: this.issuerId,
-      issuanceDate: '2023-12-07T12:23:48Z',
-      credentialSubject: {
-        name: 'Alice Smith',
-        degree: 'Computer Science',
-      },
-    }
-
-    const record = await credentials.offerCredential({
-      connectionId: connectionRecord.id,
-      protocolVersion: 'v2',
-      credentialFormats: {
-        jsonld: {
-          credential: credential,
-          options: {
-            proofType: 'Ed25519Signature2018',
-            proofPurpose: 'assertionMethod',
-          },
-        },
-      },
-    })
-
-    console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
-    console.log('Go to the Alice agent to accept the credential offer\n')
-
-    if (options?.waitForAcceptance) {
-      await this.waitForAcceptCredential(record.id)
-    }
-    return record
+    throw new Error(redText('JSON-LD credentials are not supported in this configuration. Use W3C credentials module instead.'))
   }
 
   private async printProofFlow(print: string) {
@@ -473,13 +401,8 @@ export class createFaberAgent extends BaseAgent {
       case ProofState.Done:
         console.log(greenText('Proof presented!\n'))
 
-        // Access proofs module directly
-        const proofs = this.agent.modules.proofs
-        if (!proofs) {
-          throw Error(redText('Proofs module not found'))
-        }
-
-        const formatData = await proofs.getFormatData(recordId)
+        // Access proofs directly on agent
+        const formatData = await this.agent.proofs.getFormatData(recordId)
         const revealedAttrs = formatData.presentation?.anoncreds?.requested_proof.revealed_attrs
 
         if (revealedAttrs) {
@@ -499,12 +422,7 @@ export class createFaberAgent extends BaseAgent {
     const proofAttribute = await this.newProofAttribute()
     await this.printProofFlow(greenText('\nRequesting proof...\n', false))
 
-    // Access proofs module directly
-    const proofs = this.agent.modules.proofs
-    if (!proofs) {
-      throw Error(redText('Proofs module not found'))
-    }
-
+    // Access proofs directly on agent
     const request = {
       protocolVersion: 'v2' as const,
       connectionId: connectionRecord.id,
@@ -517,7 +435,7 @@ export class createFaberAgent extends BaseAgent {
       },
     } as RequestProofOptions<[V2ProofProtocol<[AnonCredsProofFormatService]>]>
 
-    const record = await proofs.requestProof(request)
+    const record = await this.agent.proofs.requestProof(request)
 
     console.log(purpleText(`Proof request:${Color.Reset} ${JSON.stringify(request, null, 2)}`))
     console.log(`Go to the Alice agent to accept the proof request\n`)
@@ -530,60 +448,14 @@ export class createFaberAgent extends BaseAgent {
   }
 
   public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean }) {
-    const connectionRecord = await this.getConnectionRecord();
-
-    // Access proofs module directly
-    const proofs = this.agent.modules.proofs
-    if (!proofs) {
-      throw Error(redText('Proofs module not found'))
-    }
-
-    // Adjust this to fit the JSON-LD credential you issued
-    const request = {
-      protocolVersion: 'v2' as const,
-      connectionId: connectionRecord.id,
-      proofFormats: {
-        jsonld: {
-          presentationDefinition: {
-            id: 'degree-proof',
-            input_descriptors: [
-              {
-                id: 'degree',
-                schema: [{ uri: 'https://www.w3.org/2018/credentials#VerifiableCredential' }],
-                constraints: {
-                  fields: [
-                    {
-                      path: ['$.credentialSubject.degree'],
-                      filter: { type: 'string' },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-      },
-    };
-
-    const record = await proofs.requestProof(request as any);
-
-    if (options?.waitForPresentation) {
-      await this.waitForProof(record.id);
-    }
-
-    return record;
+    throw new Error(redText('JSON-LD proofs are not supported in this configuration. Use W3C credentials module instead.'))
   }
 
   public async sendMessage(message: string) {
     const connectionRecord = await this.getConnectionRecord()
     
-    // Access basic messages module directly
-    const basicMessages = this.agent.modules.basicMessages
-    if (!basicMessages) {
-      throw Error(redText('BasicMessages module not found'))
-    }
-    
-    await basicMessages.sendMessage(connectionRecord.id, message)
+    // Access basic messages directly on agent
+    await this.agent.basicMessages.sendMessage(connectionRecord.id, message)
   }
 
   public async exit() {
