@@ -1,119 +1,530 @@
-// createAliceAgent.ts (corrected)
-import type { ConnectionRecord, CredentialExchangeRecord, ProofExchangeRecord } from '@credo-ts/core'
-import { CredentialState, ProofState } from '@credo-ts/core'
+// createFaberAgent.ts (corrected with @ts-ignore for jsonld credentialFormats)
+import {
+  ProofEventTypes,
+  ProofState,
+  ProofStateChangedEvent,
+  V2ProofProtocol,
+  CredentialEventTypes,
+  CredentialState,
+  CredentialStateChangedEvent,
+  ConnectionEventTypes, 
+  ConnectionStateChangedEvent,
+  ConnectionRecord, 
+  CredentialExchangeRecord, 
+  ProofExchangeRecord,
+  RequestProofOptions,
+  CREDENTIALS_CONTEXT_V1_URL, 
+  utils,
+  V2CredentialProtocol,
+  JsonLdCredentialFormatService,  //  JSON-LD
 
-import { BaseAgent } from './BaseAgent'
-import { greenText, Output, redText } from './OutputClass'
+} from '@credo-ts/core'
 
-export class createAliceAgent extends BaseAgent {
-  public connected: boolean
-  public connectionRecordFaberId?: string
+import type {
+  AnonCredsProofFormatService,
+  RegisterCredentialDefinitionReturnStateFinished,
+  RegisterSchemaReturnStateFinished,
+  AnonCredsCredentialFormatService
+} from '@credo-ts/anoncreds'
+
+import { IndyBesuDidCreateOptions, VerificationKeyPurpose, VerificationKeyType } from '@credo-ts/indy-besu-vdr'
+
+import { BaseAgent, indyNetworkConfig } from './BaseAgent'
+import { Color, Output, greenText, purpleText, redText } from './OutputClass'
+import crypto from 'crypto'
+
+export enum RegistryOptions {
+  indy = 'did:indy',
+  indyBesu = 'did:ethr',
+}
+
+export class createFaberAgent extends BaseAgent {
+  public outOfBandId?: string
+  public schema?: RegisterSchemaReturnStateFinished
+  public credentialDefinition?: RegisterCredentialDefinitionReturnStateFinished
+  public issuerId?: string
+
+  public didPrivateKey?: Uint8Array
 
   public constructor(port: number, name: string) {
     super({ port, name })
-    this.connected = false
   }
 
-  public static async build(): Promise<createAliceAgent> {
-    const alice = new createAliceAgent(9000, 'alice')
-    await alice.initializeAgent()
-    return alice
+  public static async build(): Promise<createFaberAgent> {
+    const faber = new createFaberAgent(9001, 'faber')
+    await faber.initializeAgent()
+    return faber
+  }
+
+  public async createIndyBesuDid() {
+    // Generate a random private key for the DID
+    const privateKey = crypto.randomBytes(32)
+    this.didPrivateKey = new Uint8Array(privateKey)
+
+    const createdDid = await this.agent.dids.create<IndyBesuDidCreateOptions>({ 
+      method: 'ethr',
+      secret: {
+        didPrivateKey: new Uint8Array(privateKey),
+      },
+    })
+
+    if (createdDid.didState.state == 'failed') {
+      throw new Error(createdDid.didState.reason)
+    }
+
+    console.log(purpleText(`Created DID${Color.Reset}: ${JSON.stringify(createdDid.didState.didDocument, null, 2)}`))
+
+    this.issuerId = createdDid.didState.did
+
+    return createdDid.didState.did 
+  }
+
+  public async createW3cIndyBesuDid() {
+    // Generate a random private key for the DID
+    const privateKey = crypto.randomBytes(32)
+    this.didPrivateKey = new Uint8Array(privateKey)
+
+    // @ts-ignore
+    const assertKey = await this.agent.modules.askar.createKey({ keyType: 'ed25519' })
+
+    const createdDid = await this.agent.dids.create<IndyBesuDidCreateOptions>({
+      method: 'ethr',
+      options: {
+        verificationKeys: [
+          {
+            type: VerificationKeyType.Ed25519VerificationKey2018,
+            key: assertKey,
+            purpose: VerificationKeyPurpose.AssertionMethod,
+          },
+        ],
+      },
+      secret: {
+        didPrivateKey: new Uint8Array(privateKey),
+      },
+    })
+
+    if (createdDid.didState.state == 'failed') {
+      throw new Error(createdDid.didState.reason)
+    }
+
+    console.log(purpleText(`Created DID${Color.Reset}: ${JSON.stringify(createdDid.didState.didDocument, null, 2)}`))
+
+    this.issuerId = createdDid.didState.did
+    return createdDid.didState.did 
+  }
+
+  public async importDid(registry: string) {
+    // NOTE: we assume the did is already registered on the ledger, we just store the private key in the wallet
+    // and store the existing did in the wallet
+    // indy did is based on private key (seed)
+    const unqualifiedIndyDid = '2jEvRuKmfBJTRa7QowDpNN'
+    const indyDid = `did:indy:${indyNetworkConfig.indyNamespace}:${unqualifiedIndyDid}`
+
+    const did = registry === RegistryOptions.indy ? indyDid : indyDid
+
+    // Since we're dealing with an existing DID on the ledger, we just import it
+    // The private key handling should be done separately through wallet/key management
+    await this.agent.dids.import({
+      did,
+      overwrite: true,
+    })
+    
+    this.issuerId = did
   }
 
   private async getConnectionRecord() {
-    if (!this.connectionRecordFaberId) {
+    if (!this.outOfBandId) {
       throw Error(redText(Output.MissingConnectionRecord))
     }
-    
-    return await this.agent.connections.getById(this.connectionRecordFaberId)
+
+    const connection = await this.agent.connections.findAllByOutOfBandId(this.outOfBandId)
+
+    if (!connection || connection.length === 0) {
+      throw Error(redText(Output.MissingConnectionRecord))
+    }
+
+    return connection[0]
   }
 
-  private async receiveConnectionRequest(invitationUrl: string) {
-    console.log('🔍 Alice receiving invitation URL:', invitationUrl)
-    
-    // Decode and inspect the invitation
-    const url = new URL(invitationUrl)
-    const oobParam = url.searchParams.get('oob')
-    if (oobParam) {
-      const invitation = JSON.parse(Buffer.from(oobParam, 'base64').toString())
-      console.log('🔍 Decoded invitation services:', invitation.services)
+private async printConnectionInvite() {
+    const outOfBandRecord = await this.agent.oob.createInvitation()
+    this.outOfBandId = outOfBandRecord.id
+
+    console.log(
+      Output.ConnectionLink,
+      outOfBandRecord.outOfBandInvitation.toUrl({ domain: `http://localhost:${this.port}` }),
+    '\n'
+  )
+}
+
+  private async waitForConnection() {
+    if (!this.outOfBandId) {
+      throw new Error(redText(Output.MissingConnectionRecord))
     }
 
-   // In Credo-ts 0.5.x, outOfBand is accessed directly on the agent as agent.oob
-    const outOfBand = this.agent.oob
-    if (!outOfBand) {
-      throw new Error(redText('OutOfBand not found'))
-    }
+    console.log('Waiting for Alice to finish connection...')
 
-    const { connectionRecord } = await outOfBand.receiveInvitationFromUrl(invitationUrl)
-    
-    if (!connectionRecord) {
-      throw new Error(redText(Output.NoConnectionRecordFromOutOfBand))
-    }
-    return connectionRecord
-  }
+    const getConnectionRecord = (outOfBandId: string) =>
+      new Promise<ConnectionRecord>((resolve, reject) => {
+        // Start listener
+        this.agent.events.on<ConnectionStateChangedEvent>(ConnectionEventTypes.ConnectionStateChanged, (e) => {
+          if (e.payload.connectionRecord.outOfBandId !== outOfBandId) return
 
-  private async waitForConnection(connectionRecord: ConnectionRecord) {
-    const connections = this.agent.connections
-    if (!connections) {
-      throw Error(redText('Connections module not found'))
-    }
-    
-    const finalConnectionRecord = await connections.returnWhenIsConnected(connectionRecord.id)
-    this.connected = true
+          resolve(e.payload.connectionRecord)
+        })
+
+        void this.agent.connections.findAllByOutOfBandId(outOfBandId).then((connectionRecords: ConnectionRecord[]) => {
+          if (connectionRecords && connectionRecords.length > 0) {
+            resolve(connectionRecords[0])
+          }
+        })
+      })
+
+    const connectionRecord = await getConnectionRecord(this.outOfBandId)
+    await this.agent.connections.returnWhenIsConnected(connectionRecord.id)
     console.log(greenText(Output.ConnectionEstablished))
-    return finalConnectionRecord.id
   }
 
-  public async acceptConnection(invitation_url: string) {
-    try {
-      console.log('Alice receiving invitation URL:', invitation_url)
-      
-      const connectionRecord = await this.receiveConnectionRequest(invitation_url)
-      this.connectionRecordFaberId = await this.waitForConnection(connectionRecord)
-    } catch (error) {
-      console.error('Error in acceptConnection:', error)
-      throw error
+  public async setupConnection() {
+    await this.printConnectionInvite()
+    await this.waitForConnection()
+  }
+
+  private printSchema(name: string, version: string, attributes: string[]) {
+    console.log(`\n\nThe credential definition will look like this:\n`)
+    console.log(purpleText(`Name: ${Color.Reset}${name}`))
+    console.log(purpleText(`Version: ${Color.Reset}${version}`))
+    console.log(purpleText(`Attributes: ${Color.Reset}${attributes[0]}, ${attributes[1]}, ${attributes[2]}\n`))
+  }
+
+  public async registerSchema() {
+    if (!this.issuerId) {
+      throw new Error(redText('Missing anoncreds issuerId'))
+    }
+
+    if (!this.didPrivateKey) {
+      throw new Error(redText('Missing DID private key'))
+    }
+
+    const schemaTemplate = {
+      name: 'FaberCollege' + utils.uuid(),
+      version: '1.0.0',
+      attrNames: ['name', 'degree', 'date'],
+      issuerId: this.issuerId,
+    }
+    this.printSchema(schemaTemplate.name, schemaTemplate.version, schemaTemplate.attrNames)
+    console.log(greenText('Registering schema...\n', false))
+
+    const { schemaState } = await this.agent.modules.anoncreds.registerSchema({
+      schema: schemaTemplate,
+      options: {
+        secretKey: this.didPrivateKey,
+      },
+    })
+
+    if (schemaState.state !== 'finished') {
+      throw new Error(
+        `Error registering schema: ${schemaState.state === 'failed' ? schemaState.reason : 'Not Finished'}`
+      )
+    }
+
+    console.log(`Schema registered!\n${Color.Reset}`)
+
+    console.log(purpleText(`Schema ID:${Color.Reset} ${schemaState.schemaId}\n`))
+
+    this.schema = schemaState
+
+    return schemaState
+  }
+
+  public async registerCredentialDefinition() {
+    if (!this.issuerId) {
+      throw new Error(redText('Missing anoncreds issuerId'))
+    }
+
+    if (!this.schema) {
+      throw new Error(redText('Missing anoncreds schemaId'))
+    }
+
+    if (!this.didPrivateKey) {
+      throw new Error(redText('Missing DID private key'))
+    }
+
+    console.log(greenText('Registering credential definition...\n', false))
+
+    const { credentialDefinitionState } = await this.agent.modules.anoncreds.registerCredentialDefinition({
+      credentialDefinition: {
+        schemaId: this.schema.schemaId,
+        issuerId: this.issuerId,
+        tag: 'latest',
+      },
+      options: {
+        secretKey: this.didPrivateKey,
+        supportRevocation: false,
+      },
+    })
+
+    if (credentialDefinitionState.state !== 'finished') {
+      throw new Error(
+        `Error registering credential definition: ${
+          credentialDefinitionState.state === 'failed' ? credentialDefinitionState.reason : 'Not Finished'
+        }}`
+      )
+    }
+
+    this.credentialDefinition = credentialDefinitionState
+
+    console.log(`Credential definition registered!\n${Color.Reset}`)
+
+    if (!credentialDefinitionState.credentialDefinitionId) {
+      throw new Error('Credential definition ID not found in state')
+    }
+
+    console.log(
+      purpleText(`Credential definition ID:${Color.Reset} ${credentialDefinitionState.credentialDefinitionId}\n`)
+    )
+
+    return credentialDefinitionState
+  }
+
+  private async waitForAcceptCredential(recordId: string) {
+    console.log('Waiting for Alice to accept credential...\n\n')
+
+    const getCredentialExchangeRecord = (recordId: string) =>
+      new Promise<CredentialExchangeRecord>((resolve, reject) => {
+        this.agent.events.on(
+          CredentialEventTypes.CredentialStateChanged,
+          async ({ payload }: CredentialStateChangedEvent) => {
+            if (recordId !== payload.credentialRecord.id) return
+
+            const state = payload.credentialRecord.state
+            if (
+              state === CredentialState.Done ||
+              state === CredentialState.Declined ||
+              state === CredentialState.Abandoned
+            ) {
+              resolve(payload.credentialRecord)
+            }
+          }
+        )
+      })
+
+    const record = await getCredentialExchangeRecord(recordId)
+
+    switch (record.state) {
+      case CredentialState.Done:
+        console.log(greenText('Credential accepted!\n'))
+        break
+      case CredentialState.Declined:
+        console.log(redText('Credential declined\n'))
+        break
+      case CredentialState.Abandoned:
+        console.log(redText('Abandoned\n'))
     }
   }
 
-  public async acceptCredentialOffer(credentialRecord: CredentialExchangeRecord) {
-    const credentials = this.agent.credentials
-    if (!credentials) {
-      throw Error(redText('Credentials module not found'))
+  public async issueAnonCredsCredential(options?: { waitForAcceptance?: boolean }) {
+    if (!this.credentialDefinition) {
+      throw new Error(redText('Missing anoncreds credentialDefinitionId'))
+    }
+    const connectionRecord = await this.getConnectionRecord()
+    
+    const credential = {
+      attributes: [
+        { name: 'name', value: 'Alice Smith' },
+        { name: 'degree', value: 'Computer Science' },
+        { name: 'date', value: '01/01/2022' },
+      ],
+      credentialDefinitionId: this.credentialDefinition.credentialDefinitionId,
+    }
+
+    const record = await this.agent.credentials.offerCredential({
+      connectionId: connectionRecord.id,
+      protocolVersion: 'v2',
+      credentialFormats: { anoncreds: credential },
+    })
+
+    if (options?.waitForAcceptance) {
+      await this.waitForAcceptCredential(record.id)
+    }
+    return record
+  }
+
+  public async issueJsonLdCredential(options?: { waitForAcceptance?: boolean }) {
+    if (!this.issuerId) {
+      throw new Error(redText('Missing issuerDid'))
+    }
+
+    const connectionRecord = await this.getConnectionRecord()
+
+    const credential = {
+      '@context': [CREDENTIALS_CONTEXT_V1_URL, 'https://www.w3.org/2018/credentials/examples/v1'],
+      type: ['VerifiableCredential', 'FaberCollege'],
+      issuer: this.issuerId,
+      issuanceDate: '2023-12-07T12:23:48Z',
+      credentialSubject: {
+        name: 'Alice Smith',
+        degree: 'Computer Science',
+      },
+    }
+
+    const record = await this.agent.credentials.offerCredential({
+      connectionId: connectionRecord.id,
+      protocolVersion: 'v2',
+      credentialFormats: {
+        // @ts-ignore
+        jsonld: {
+          credential: credential,
+          options: {
+            proofType: 'Ed25519Signature2018',
+            proofPurpose: 'assertionMethod',
+          },
+        },
+      },
+    })
+
+    console.log(purpleText(`Credential:${Color.Reset} ${JSON.stringify(credential, null, 2)}`))
+    console.log('Go to the Alice agent to accept the credential offer\n')
+
+    if (options?.waitForAcceptance) {
+      await this.waitForAcceptCredential(record.id)
+    }
+    return record
+  }
+
+  private async printProofFlow(print: string) {
+    await new Promise((f) => setTimeout(f, 2000))
+  }
+
+  private async newProofAttribute() {
+    await this.printProofFlow(greenText(`Creating new proof attribute for 'name' ...\n`))
+    
+    if (!this.credentialDefinition) {
+      throw new Error(redText('Missing credential definition'))
     }
     
-    await credentials.acceptOffer({
-      credentialRecordId: credentialRecord.id,
-    })
+    const proofAttribute = {
+      name: {
+        name: 'name',
+        restrictions: [
+          {
+            cred_def_id: this.credentialDefinition.credentialDefinitionId,
+          },
+        ],
+      },
+    }
+
+    return proofAttribute
   }
 
-  public async acceptProofRequest(proofRecord: ProofExchangeRecord) {
-    const proofs = this.agent.proofs
-    if (!proofs) {
-      throw Error(redText('Proofs module not found'))
-    }
-    
-    const requestedCredentials = await proofs.selectCredentialsForRequest({
-      proofRecordId: proofRecord.id,
-    })
+  private async waitForProof(recordId: string) {
+    console.log('Waiting for Alice to present proof...\n\n')
 
-    await proofs.acceptRequest({
-      proofRecordId: proofRecord.id,
-      proofFormats: requestedCredentials.proofFormats,
-    })
-    console.log(greenText('\nProof request accepted!\n'))
+    const getCredentialExchangeRecord = (recordId: string) =>
+      new Promise<ProofExchangeRecord>((resolve, reject) => {
+        this.agent.events.on(ProofEventTypes.ProofStateChanged, async ({ payload }: ProofStateChangedEvent) => {
+          if (recordId !== payload.proofRecord.id) return
+
+          const state = payload.proofRecord.state
+          if (state === ProofState.Done || state === ProofState.Declined || state === ProofState.Abandoned) {
+            resolve(payload.proofRecord)
+          }
+        })
+      })
+
+    const record = await getCredentialExchangeRecord(recordId)
+
+    switch (record.state) {
+      case ProofState.Done:
+        console.log(greenText('Proof presented!\n'))
+
+        const formatData = await this.agent.proofs.getFormatData(recordId)
+        const revealedAttrs = formatData.presentation?.anoncreds?.requested_proof.revealed_attrs
+
+        if (revealedAttrs) {
+          console.log(purpleText(`Revealed attributes:${Color.Reset} ${JSON.stringify(revealedAttrs, null, 2)}\n\n`))
+        }
+        break
+      case ProofState.Declined:
+        console.log(redText('Proof request declined\n'))
+        break
+      case ProofState.Abandoned:
+        console.log(redText('Abandoned\n'))
+    }
+  }
+
+  public async sendAnonCredsProofRequest(options?: { waitForPresentation?: boolean }) {
+    const connectionRecord = await this.getConnectionRecord()
+    const proofAttribute = await this.newProofAttribute()
+    await this.printProofFlow(greenText('\nRequesting proof...\n', false))
+
+    const request = {
+      protocolVersion: 'v2' as const,
+      connectionId: connectionRecord.id,
+      proofFormats: {
+        anoncreds: {
+          name: 'proof-request',
+          version: '1.0',
+          requested_attributes: proofAttribute,
+        },
+      },
+    } as RequestProofOptions<[V2ProofProtocol<[AnonCredsProofFormatService]>]>
+
+    const record = await this.agent.proofs.requestProof(request)
+
+    console.log(purpleText(`Proof request:${Color.Reset} ${JSON.stringify(request, null, 2)}`))
+    console.log(`Go to the Alice agent to accept the proof request\n`)
+
+    if (options?.waitForPresentation) {
+      await this.waitForProof(record.id)
+    }
+
+    return record
+  }
+
+  public async sendJsonLdProofRequest(options?: { waitForPresentation?: boolean }) {
+    const connectionRecord = await this.getConnectionRecord();
+
+    const request = {
+      protocolVersion: 'v2' as const,
+      connectionId: connectionRecord.id,
+      proofFormats: {
+        jsonld: {
+          presentationDefinition: {
+            id: 'degree-proof',
+            input_descriptors: [
+              {
+                id: 'degree',
+                schema: [{ uri: 'https://www.w3.org/2018/credentials#VerifiableCredential' }],
+                constraints: {
+                  fields: [
+                    {
+                      path: ['$.credentialSubject.degree'],
+                      filter: { type: 'string' },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    // @ts-ignore
+    const record = await this.agent.proofs.requestProof(request as any);
+
+    if (options?.waitForPresentation) {
+      await this.waitForProof(record.id);
+    }
+
+    return record;
   }
 
   public async sendMessage(message: string) {
     const connectionRecord = await this.getConnectionRecord()
     
-    const basicMessages = this.agent.basicMessages
-    if (!basicMessages) {
-      throw Error(redText('BasicMessages module not found'))
-    }
-    
-    await basicMessages.sendMessage(connectionRecord.id, message)
+    await this.agent.basicMessages.sendMessage(connectionRecord.id, message)
   }
 
   public async exit() {
@@ -124,29 +535,5 @@ export class createAliceAgent extends BaseAgent {
 
   public async restart() {
     await this.agent.shutdown()
-  }
-
-  public async acceptAllCredentialOffers() {
-    const credentials = this.agent.credentials
-    if (!credentials) {
-      throw Error(redText('Credentials module not found'))
-    }
-    
-    const records = await credentials.findAllByQuery({ state: CredentialState.OfferReceived })
-    for (const record of records) {
-      await credentials.acceptOffer({ credentialRecordId: record.id })
-    }
-  }
-
-  public async acceptAllProofRequests() {
-    const proofs = this.agent.proofs
-    if (!proofs) {
-      throw Error(redText('Proofs module not found'))
-    }
-    
-    const records = await proofs.findAllByQuery({ state: ProofState.RequestReceived })
-    for (const record of records) {
-      await this.acceptProofRequest(record)
-    }
   }
 }
