@@ -64,13 +64,14 @@ export const indyNetworkConfig: IndyVdrPoolConfig = {
   connectOnStartup: true,
 }
 
-type DemoAgent = Agent<ReturnType<typeof getCredoModules>>
+type Modules = ReturnType<typeof getCredoModules>;
+type DemoAgent = Agent<Modules>;
 
 export class BaseAgent {
   public port: number
   public name: string
   public config: InitConfig
-  public agent: DemoAgent
+  public agent: DemoAgent;
 
   public constructor({
     port,
@@ -111,7 +112,7 @@ export class BaseAgent {
     this.agent = new Agent({
       config,
       dependencies: agentDependencies,
-      modules: getCredoModules() as any,
+      modules: getCredoModules(),
     })
     
     // Register transports after agent creation (Credo 0.5.x way)
@@ -124,15 +125,17 @@ export class BaseAgent {
     console.log(greenText(`\nAgent ${this.name} created!\n`))
     
     // Debug: Check what modules are actually available after initialization
-    console.log(`${this.name} modules after init:`, Object.keys(this.agent.modules))
-    
-    // Debug: Check if core features are available through different properties
-    console.log(`${this.name} agent properties:`, Object.keys(this.agent))
-    
-    // Try to find where connections, credentials, etc. are located
-    if ('api' in this.agent) {
-      console.log(`${this.name} has api property`)
-    }
+    console.log(`${this.name} available modules:`, {
+      connections: !!this.agent.connections,
+      oob: !!this.agent.oob,
+      basicMessages: !!this.agent.basicMessages,
+      credentials: !!this.agent.credentials,
+      proofs: !!this.agent.proofs,
+      wallet: !!this.agent.wallet,
+      dids: !!this.agent.dids,
+      anoncreds: !!this.agent.modules?.anoncreds,
+      indyVdr: !!this.agent.modules?.indyVdr
+    })
   }
 }
 
@@ -142,7 +145,7 @@ function getCredoModules() {
 
   const modules = {
     connections: new ConnectionsModule({
-      autoAcceptConnections: false,
+      autoAcceptConnections: true,
     }),
     outOfBand: new OutOfBandModule(),
     basicMessages: new BasicMessagesModule(),
