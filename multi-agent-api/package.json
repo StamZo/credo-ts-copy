@@ -4,24 +4,22 @@
   "private": true,
   "license": "Apache-2.0",
   "scripts": {
-    "dev": "ts-node src/app.ts",
-    "api": "ts-node src/app.ts",
-    "start": "ts-node src/app.ts",
+    "dev": "ts-node --transpile-only src/app.ts",
+    "start": "ts-node --transpile-only src/app.ts",
     "build": "tsc",
+    "build:run": "tsc && node dist/app.js",
     "test": "jest"
   },
   "dependencies": {
     "@credo-ts/anoncreds": "workspace:*",
-    "@credo-ts/askar": "workspace:",
+    "@credo-ts/askar": "workspace:*",
     "@credo-ts/core": "workspace:*",
-    "@credo-ts/didcomm": "workspace:*",
     "@credo-ts/indy-besu-vdr": "workspace:*",
     "@credo-ts/indy-vdr": "workspace:*",
     "@credo-ts/node": "workspace:*",
     "@hyperledger/anoncreds-nodejs": "^0.2.2",
     "@hyperledger/aries-askar-nodejs": "^0.2.3",
     "@hyperledger/indy-vdr-nodejs": "^0.2.2",
-    "@openwallet-foundation/askar-shared": "^0.3.2",
     "ethers": "^6.8.1",
     "express": "^4.18.2"
   },
