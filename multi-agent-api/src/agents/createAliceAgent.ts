@@ -1,5 +1,5 @@
-import type { ConnectionRecord, CredentialExchangeRecord, ProofExchangeRecord } from '@credo-ts/didcomm'
-import { CredentialState, ProofState } from '@credo-ts/didcomm'
+import type { ConnectionRecord, CredentialExchangeRecord, ProofExchangeRecord } from '@credo-ts/core'
+import { CredentialState, ProofState } from '@credo-ts/core'
 
 import { BaseAgent } from './BaseAgent'
 import { greenText, Output, redText } from './OutputClass'
@@ -23,11 +23,35 @@ export class createAliceAgent extends BaseAgent {
     if (!this.connectionRecordFaberId) {
       throw Error(redText(Output.MissingConnectionRecord))
     }
-    return await this.agent.modules.connections.getById(this.connectionRecordFaberId)
+    
+    // @ts-ignore
+    const connections = this.agent.modules.connections
+    if (!connections) {
+      throw Error(redText('Connections module not found'))
+    }
+    
+    return await connections.getById(this.connectionRecordFaberId)
   }
 
   private async receiveConnectionRequest(invitationUrl: string) {
-    const { connectionRecord } = await this.agent.modules.oob.receiveInvitationFromUrl(invitationUrl)
+    console.log('🔍 Alice receiving invitation URL:', invitationUrl)
+    
+    // Decode and inspect the invitation
+    const url = new URL(invitationUrl)
+    const oobParam = url.searchParams.get('oob')
+    if (oobParam) {
+      const invitation = JSON.parse(Buffer.from(oobParam, 'base64').toString())
+      console.log('🔍 Decoded invitation services:', invitation.services)
+    }
+
+   // In Credo-ts 0.5.x, outOfBand is accessed directly on the agent as agent.oob
+    const outOfBand = this.agent.oob
+    if (!outOfBand) {
+      throw new Error(redText('OutOfBand not found'))
+    }
+
+    const { connectionRecord } = await outOfBand.receiveInvitationFromUrl(invitationUrl)
+    
     if (!connectionRecord) {
       throw new Error(redText(Output.NoConnectionRecordFromOutOfBand))
     }
@@ -35,29 +59,54 @@ export class createAliceAgent extends BaseAgent {
   }
 
   private async waitForConnection(connectionRecord: ConnectionRecord) {
-    connectionRecord = await this.agent.modules.connections.returnWhenIsConnected(connectionRecord.id)
+    // @ts-ignore
+    const connections = this.agent.modules.connections
+    if (!connections) {
+      throw Error(redText('Connections module not found'))
+    }
+    
+    const finalConnectionRecord = await connections.returnWhenIsConnected(connectionRecord.id)
     this.connected = true
     console.log(greenText(Output.ConnectionEstablished))
-    return connectionRecord.id
+    return finalConnectionRecord.id
   }
 
   public async acceptConnection(invitation_url: string) {
-    const connectionRecord = await this.receiveConnectionRequest(invitation_url)
-    this.connectionRecordFaberId = await this.waitForConnection(connectionRecord)
+    try {
+      console.log('Alice receiving invitation URL:', invitation_url)
+      
+      const connectionRecord = await this.receiveConnectionRequest(invitation_url)
+      this.connectionRecordFaberId = await this.waitForConnection(connectionRecord)
+    } catch (error) {
+      console.error('Error in acceptConnection:', error)
+      throw error
+    }
   }
 
   public async acceptCredentialOffer(credentialRecord: CredentialExchangeRecord) {
-    await this.agent.modules.credentials.acceptOffer({
+    // @ts-ignore
+    const credentials = this.agent.modules.credentials
+    if (!credentials) {
+      throw Error(redText('Credentials module not found'))
+    }
+    
+    await credentials.acceptOffer({
       credentialRecordId: credentialRecord.id,
     })
   }
 
   public async acceptProofRequest(proofRecord: ProofExchangeRecord) {
-    const requestedCredentials = await this.agent.modules.proofs.selectCredentialsForRequest({
+    // @ts-ignore
+    const proofs = this.agent.modules.proofs
+    if (!proofs) {
+      throw Error(redText('Proofs module not found'))
+    }
+    
+    const requestedCredentials = await proofs.selectCredentialsForRequest({
       proofRecordId: proofRecord.id,
     })
 
-    await this.agent.modules.proofs.acceptRequest({
+    await proofs.acceptRequest({
       proofRecordId: proofRecord.id,
       proofFormats: requestedCredentials.proofFormats,
     })
@@ -66,7 +115,14 @@ export class createAliceAgent extends BaseAgent {
 
   public async sendMessage(message: string) {
     const connectionRecord = await this.getConnectionRecord()
-    await this.agent.modules.basicMessages.sendMessage(connectionRecord.id, message)
+    
+    // @ts-ignore
+    const basicMessages = this.agent.modules.basicMessages
+    if (!basicMessages) {
+      throw Error(redText('BasicMessages module not found'))
+    }
+    
+    await basicMessages.sendMessage(connectionRecord.id, message)
   }
 
   public async exit() {
@@ -80,14 +136,26 @@ export class createAliceAgent extends BaseAgent {
   }
 
   public async acceptAllCredentialOffers() {
-    const records = await this.agent.modules.credentials.findAllByQuery({ state: CredentialState.OfferReceived })
+    // @ts-ignore
+    const credentials = this.agent.modules.credentials
+    if (!credentials) {
+      throw Error(redText('Credentials module not found'))
+    }
+    
+    const records = await credentials.findAllByQuery({ state: CredentialState.OfferReceived })
     for (const record of records) {
-      await this.agent.modules.credentials.acceptOffer({ credentialRecordId: record.id })
+      await credentials.acceptOffer({ credentialRecordId: record.id })
     }
   }
 
   public async acceptAllProofRequests() {
-    const records = await this.agent.modules.proofs.findAllByQuery({ state: ProofState.RequestReceived })
+    // @ts-ignore
+    const proofs = this.agent.modules.proofs
+    if (!proofs) {
+      throw Error(redText('Proofs module not found'))
+    }
+    
+    const records = await proofs.findAllByQuery({ state: ProofState.RequestReceived })
     for (const record of records) {
       await this.acceptProofRequest(record)
     }
