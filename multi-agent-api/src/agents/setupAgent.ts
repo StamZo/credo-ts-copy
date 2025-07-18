@@ -1,26 +1,21 @@
 import { Agent, ConsoleLogger, LogLevel } from '@credo-ts/core'
 import { agentDependencies } from '@credo-ts/node'
 import { AskarModule } from '@credo-ts/askar'
-import askarShared from '@openwallet-foundation/askar-shared'
+import { ariesAskar } from '@hyperledger/aries-askar-nodejs'
 import { IndyBesuModule, IndyBesuDidRegistrar, IndyBesuDidResolver } from '@credo-ts/indy-besu-vdr'
 import { DidsModule } from '@credo-ts/core'
 
 export async function setupAgent(): Promise<Agent> {
   const agent = new Agent({
-        config: {
+    config: {
       label: 'consentis-agent',
       logger: new ConsoleLogger(LogLevel.info),
     },
-
     dependencies: agentDependencies,
     modules: {
       askar: new AskarModule({
-      askar: askarShared.askar,  // Correct property name
-      store: {
-        id: 'consentis-agent',
-        key: 'consentis-agent',
-      },
-    }),
+        ariesAskar,
+      }),
       dids: new DidsModule({
         resolvers: [new IndyBesuDidResolver() as any],
         registrars: [new IndyBesuDidRegistrar() as any],
