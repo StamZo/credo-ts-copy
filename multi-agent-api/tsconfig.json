@@ -10,17 +10,15 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["node", "jest", "express"],
+    "types": ["node"],
     "outDir": "./dist",
     "baseUrl": "./src",
-    "paths": {
-      "@credo-ts/indy-besu-vdr": ["../../packages/indy-besu-vdr/src"],
-      "@credo-ts/indy-besu-vdr/*": ["../../packages/indy-besu-vdr/src/*"]
-    }
+    "useUnknownInCatchVariables": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
-    "src/**/*",
-    "../../packages/indy-besu-vdr/src/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
