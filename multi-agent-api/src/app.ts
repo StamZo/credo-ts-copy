@@ -16,6 +16,15 @@ async function setupAgents() {
     const alice = await createAliceAgent.build()
 
     agents = { faber, alice }
+    
+    // Debug: Check what's available on the agent
+    console.log('Faber agent structure:', Object.keys(faber.agent))
+    console.log('Alice agent structure:', Object.keys(alice.agent))
+    
+    // Check for specific modules
+    console.log('Faber connections module:', faber.agent.connections ? 'Found' : 'Not found')
+    console.log('Faber oob module:', faber.agent.oob ? 'Found' : 'Not found')
+    
     console.log('✅ Agents initialized successfully.')
   } catch (error) {
     console.error('❌ Failed to initialize agents:', error)
@@ -40,19 +49,20 @@ app.post('/connections/invite', async (req, res) => {
   try {
     const endpoint = `http://localhost:${agents.faber.port}`
     
-    // In Credo 0.5.x, out-of-band is accessed as 'oob' on the agent
+    // In Credo 0.5.x, outOfBand is accessed directly on the agent
     const outOfBand = agents.faber.agent.oob
     
     if (!outOfBand) {
       return res.status(500).json({ 
-        error: 'OutOfBand not found'
+        error: 'OutOfBand not found',
+        hint: 'Try accessing via agent.outOfBand instead of agent.modules.outOfBand'
       })
     }
     
     // Create invitation with proper configuration for Credo 0.5.x
     const outOfBandRecord = await outOfBand.createInvitation({
       multiUseInvitation: false,
-      autoAcceptConnection: false,
+      autoAcceptConnection: true,
       handshake: true,
       label: 'Faber Agent',
       handshakeProtocols: ['https://didcomm.org/connections/1.0'],
