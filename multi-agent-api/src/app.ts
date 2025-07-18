@@ -1,6 +1,8 @@
+import 'reflect-metadata';
 import express from 'express'
 import { createFaberAgent } from './agents/createFaberAgent'
 import { createAliceAgent } from './agents/createAliceAgent'
+import { OutOfBandInvitation } from '@credo-ts/core'
 
 const app: express.Application = express()
 app.use(express.json())
@@ -36,13 +38,42 @@ app.get('/status', (req, res) => {
 // Connection endpoints
 app.post('/connections/invite', async (req, res) => {
   try {
-    // Faber creates an invitation
-    const outOfBand = await agents.faber.agent.oob.createInvitation()
-    agents.faber.outOfBandId = outOfBand.id
+    const endpoint = `http://localhost:${agents.faber.port}`
+    
+    // In Credo 0.5.x, outOfBand is accessed directly on the agent
+    const outOfBand = agents.faber.agent.oob
+    
+    if (!outOfBand) {
+      return res.status(500).json({ 
+        error: 'OutOfBand not found',
+        hint: 'Try accessing via agent.outOfBand instead of agent.modules.outOfBand'
+      })
+    }
+    
+    // Create invitation with proper configuration for Credo 0.5.x
+    const outOfBandRecord = await outOfBand.createInvitation({
+      multiUseInvitation: false,
+      autoAcceptConnection: false,
+      handshake: true,
+      label: 'Faber Agent',
+      handshakeProtocols: ['https://didcomm.org/connections/1.0'],
+    })
+    
+    agents.faber.outOfBandId = outOfBandRecord.id
 
-    // Return invitation URL for Alice to use
-    const inviteUrl = outOfBand.outOfBandInvitation.toUrl({ domain: `http://localhost:4000` })
-    res.json({ inviteUrl })
+    // Get the invitation URL
+    const inviteUrl = outOfBandRecord.outOfBandInvitation.toUrl({ domain: endpoint })
+    
+    // Get the invitation object
+    const invitation = outOfBandRecord.outOfBandInvitation.toJSON()
+    
+    console.log('Created invitation with services:', JSON.stringify(invitation.services, null, 2))
+    
+    res.json({ 
+      inviteUrl,
+      outOfBandId: outOfBandRecord.id,
+      invitation: invitation,
+    })
   } catch (error) {
     console.error('Error creating invitation:', error)
     res.status(500).json({ error: (error as Error).message })
@@ -56,12 +87,17 @@ app.post('/connections/accept', async (req, res) => {
       return res.status(400).json({ error: 'inviteUrl is required' })
     }
     
+    console.log('Alice accepting invitation:', inviteUrl)
+    
     // Alice accepts the invitation
     await agents.alice.acceptConnection(inviteUrl)
     res.json({ status: 'Alice connected to Faber!' })
   } catch (error) {
     console.error('Error accepting connection:', error)
-    res.status(500).json({ error: (error as Error).message })
+    res.status(500).json({ 
+      error: (error as Error).message,
+      stack: (error as Error).stack 
+    })
   }
 })
 
@@ -165,6 +201,7 @@ app.post('/credentials/accept', async (req, res) => {
 
 app.get('/credentials/:id/status', async (req, res) => {
   try {
+    // Access credentials directly on agent
     const record = await agents.faber.agent.credentials.findById(req.params.id)
     res.json({ 
       id: record.id, 
@@ -227,8 +264,9 @@ app.post('/proof/accept', async (req, res) => {
 app.get('/proof/:id/status', async (req, res) => {
   try {
     const id = req.params.id
+    
+    // Access proofs directly on agent
     const record = await agents.faber.agent.proofs.findById(id)
-
     let revealedAttributes = undefined
 
     if (record.state === 'done') {
@@ -282,6 +320,7 @@ app.get('/health', async (req, res) => {
     res.json({
       status: 'healthy',
       framework: 'Credo',
+      version: '0.5.15',
       agents: {
         faber: faberStatus,
         alice: aliceStatus,
