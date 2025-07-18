@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["node", "jest", "express"],
+    "types": ["node"],
     "outDir": "./dist",
     "baseUrl": "./src",
     "useUnknownInCatchVariables": false,
