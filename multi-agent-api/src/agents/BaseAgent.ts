@@ -3,21 +3,18 @@ import type { InitConfig } from '@credo-ts/core'
 import { 
   Agent, 
   DidsModule,
-  W3cCredentialsModule
-} from '@credo-ts/core'
-import { 
+  W3cCredentialsModule,
   ConnectionsModule, 
-  ProofsModule, 
   CredentialsModule, 
   OutOfBandModule, 
   BasicMessagesModule, 
-  HttpOutboundTransport,
+  ProofsModule,
   AutoAcceptCredential,
   AutoAcceptProof,
+  HttpOutboundTransport,
   V2CredentialProtocol,
-  V2ProofProtocol,
-  DidCommModule
-} from '@credo-ts/didcomm'
+  V2ProofProtocol
+} from '@credo-ts/core'
 
 // Import from node package
 import { agentDependencies, HttpInboundTransport } from '@credo-ts/node'
@@ -50,7 +47,7 @@ import { AskarModule } from '@credo-ts/askar'
 // Native bindings
 import { anoncreds } from '@hyperledger/anoncreds-nodejs'
 import { indyVdr } from '@hyperledger/indy-vdr-nodejs'
-import { askar } from '@openwallet-foundation/askar-nodejs'
+import { ariesAskar } from '@hyperledger/aries-askar-nodejs'
 
 import { greenText } from './OutputClass'
 
@@ -60,7 +57,6 @@ import * as path from 'path';
 // Load genesis as a string
 const bcovrin = fs.readFileSync(path.join(__dirname, 'bcovrin.genesis'), 'utf8');
 
-
 export const indyNetworkConfig: IndyVdrPoolConfig = {
   genesisTransactions: bcovrin,
   indyNamespace: 'bcovrin:test',
@@ -68,8 +64,7 @@ export const indyNetworkConfig: IndyVdrPoolConfig = {
   connectOnStartup: true,
 }
 
-type DemoAgent = Agent<any>
-
+type DemoAgent = Agent<ReturnType<typeof getCredoModules>>
 
 export class BaseAgent {
   public port: number
@@ -98,7 +93,15 @@ export class BaseAgent {
     
     const config = {
       label: name,
-      walletConfig: { id: name, key: name },
+      walletConfig: { 
+        id: name,
+        key: name,
+        storage: {
+          type: 'sqlite',
+          path: `/tmp/credo_${name}_${Date.now()}.db` // Use temp directory with unique name
+        }
+      },
+      autoUpdateStorageOnStartup: true, // Force storage update
       endpoints: [endpoint],
     } as InitConfig
 
@@ -111,14 +114,25 @@ export class BaseAgent {
       modules: getCredoModules() as any,
     })
     
-    // Register transports after agent creation
-    this.agent.modules.didcomm.registerInboundTransport(new HttpInboundTransport({ port }))
-    this.agent.modules.didcomm.registerOutboundTransport(new HttpOutboundTransport())
+    // Register transports after agent creation (Credo 0.5.x way)
+    this.agent.registerInboundTransport(new HttpInboundTransport({ port }))
+    this.agent.registerOutboundTransport(new HttpOutboundTransport())
   }
 
   public async initializeAgent() {
     await this.agent.initialize()
     console.log(greenText(`\nAgent ${this.name} created!\n`))
+    
+    // Debug: Check what modules are actually available after initialization
+    console.log(`${this.name} modules after init:`, Object.keys(this.agent.modules))
+    
+    // Debug: Check if core features are available through different properties
+    console.log(`${this.name} agent properties:`, Object.keys(this.agent))
+    
+    // Try to find where connections, credentials, etc. are located
+    if ('api' in this.agent) {
+      console.log(`${this.name} has api property`)
+    }
   }
 }
 
@@ -126,20 +140,15 @@ function getCredoModules() {
   const legacyIndyCredentialFormatService = new LegacyIndyCredentialFormatService()
   const legacyIndyProofFormatService = new LegacyIndyProofFormatService()
 
-  return {
-    // Add DidCommModule to provide the config
-    didcomm: new DidCommModule(),
-    
+  const modules = {
     connections: new ConnectionsModule({
-      // Remove autoAcceptConnections to require manual acceptance
       autoAcceptConnections: false,
     }),
-    oob: new OutOfBandModule(),
+    outOfBand: new OutOfBandModule(),
     basicMessages: new BasicMessagesModule(),
     w3cCredentials: new W3cCredentialsModule(),
     
     credentials: new CredentialsModule({
-      // Keep auto-accept for credentials for easier testing
       autoAcceptCredentials: AutoAcceptCredential.ContentApproved,
       credentialProtocols: [
         new V1CredentialProtocol({
@@ -155,7 +164,6 @@ function getCredoModules() {
     }),
     
     proofs: new ProofsModule({
-      // Keep auto-accept for proofs for easier testing
       autoAcceptProofs: AutoAcceptProof.ContentApproved,
       proofProtocols: [
         new V1ProofProtocol({
@@ -176,12 +184,7 @@ function getCredoModules() {
     }),
     
     askar: new AskarModule({
-      askar,
-      // Properly configure the wallet store
-      store: {
-        id: 'default',
-        key: 'defaultkey',
-      },
+      ariesAskar,
     }),
     
     indyVdr: new IndyVdrModule({
@@ -205,4 +208,9 @@ function getCredoModules() {
       transactionTimeoutMs: 30000,
     }) as any,
   }
+
+  // Debug: Log what modules we're creating
+  console.log('Creating modules:', Object.keys(modules))
+  
+  return modules
 }
