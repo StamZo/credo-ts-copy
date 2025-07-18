@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import express from 'express'
 import { createFaberAgent } from './agents/createFaberAgent'
 import { createAliceAgent } from './agents/createAliceAgent'
+import { OutOfBandInvitation } from '@credo-ts/core'
 
 const app: express.Application = express()
 app.use(express.json())
@@ -35,21 +36,20 @@ app.get('/status', (req, res) => {
 })
 
 // Connection endpoints
-
-// Connection endpoints
-// Connection endpoints
 app.post('/connections/invite', async (req, res) => {
   try {
     const endpoint = `http://localhost:${agents.faber.port}`
     
-    // Access the out-of-band module
-    const outOfBand = agents.faber.agent.modules.oob || agents.faber.agent.modules.outOfBand
+    // In Credo 0.5.x, out-of-band is accessed as 'oob' on the agent
+    const outOfBand = agents.faber.agent.oob
     
     if (!outOfBand) {
-      return res.status(500).json({ error: 'OutOfBand module not found' })
+      return res.status(500).json({ 
+        error: 'OutOfBand not found'
+      })
     }
     
-    // Create invitation
+    // Create invitation with proper configuration for Credo 0.5.x
     const outOfBandRecord = await outOfBand.createInvitation({
       multiUseInvitation: false,
       autoAcceptConnection: false,
@@ -60,25 +60,11 @@ app.post('/connections/invite', async (req, res) => {
     
     agents.faber.outOfBandId = outOfBandRecord.id
 
+    // Get the invitation URL
+    const inviteUrl = outOfBandRecord.outOfBandInvitation.toUrl({ domain: endpoint })
+    
     // Get the invitation object
     const invitation = outOfBandRecord.outOfBandInvitation.toJSON()
-    
-    // Fix the services to include serviceEndpoint
-    if (invitation.services && Array.isArray(invitation.services)) {
-      invitation.services = invitation.services.map((service: any) => {
-        if (service.type === 'did-communication' && !service.serviceEndpoint) {
-          return {
-            ...service,
-            serviceEndpoint: endpoint
-          }
-        }
-        return service
-      })
-    }
-    
-    // Encode the fixed invitation
-    const encodedInvitation = Buffer.from(JSON.stringify(invitation)).toString('base64')
-    const inviteUrl = `${endpoint}?oob=${encodedInvitation}`
     
     console.log('Created invitation with services:', JSON.stringify(invitation.services, null, 2))
     
@@ -92,7 +78,6 @@ app.post('/connections/invite', async (req, res) => {
     res.status(500).json({ error: (error as Error).message })
   }
 })
-
 
 app.post('/connections/accept', async (req, res) => {
   try {
@@ -114,57 +99,7 @@ app.post('/connections/accept', async (req, res) => {
     })
   }
 })
-// app.post('/connections/accept', async (req, res) => {
-//   try {
-//     const { inviteUrl } = req.body
-//     if (!inviteUrl) {
-//       return res.status(400).json({ error: 'inviteUrl is required' })
-//     }
-    
-//     // Debug the invitation before processing
-//     console.log('🔍 Debugging invitation URL:', inviteUrl)
-    
-//     try {
-//       // Parse the invitation manually to inspect it
-//       const url = new URL(inviteUrl)
-//       const oobParam = url.searchParams.get('oob') || url.searchParams.get('_oob')
-//       if (oobParam) {
-//         const decodedInvitation = JSON.parse(Buffer.from(oobParam, 'base64').toString())
-//         console.log('📋 Decoded invitation:', JSON.stringify(decodedInvitation, null, 2))
-        
-//         // Check services
-//         if (decodedInvitation.services) {
-//           decodedInvitation.services.forEach((service: any, index: number) => {
-//             console.log(`🔧 Service ${index}:`, {
-//               id: service.id,
-//               type: service.type,
-//               serviceEndpoint: service.serviceEndpoint,
-//               hasRecipientKeys: !!service.recipientKeys?.length
-//             })
-            
-//             // Test the URI validation regex manually
-//             const uriRegex = /\w+:(\/?\/?)[^\s]+/
-//             const isValid = uriRegex.test(service.serviceEndpoint)
-//             console.log(`✅ URI validation for "${service.serviceEndpoint}": ${isValid}`)
-//           })
-//         }
-//       }
-//     } catch (parseError) {
-//       console.warn('⚠️ Could not parse invitation for debugging:', parseError)
-//     }
-    
-//     // Attempt the connection
-//     await agents.alice.acceptConnection(inviteUrl)
-//     res.json({ status: 'Alice connected to Faber!' })
-    
-//   } catch (error) {
-//     console.error('❌ Connection acceptance error:', error)
-//     res.status(500).json({ 
-//       error: (error as Error).message,
-//       stack: (error as Error).stack
-//     })
-//   }
-// })
+
 // DID endpoints
 app.post('/agent/create-did', async (req, res) => {
   try {
@@ -265,14 +200,8 @@ app.post('/credentials/accept', async (req, res) => {
 
 app.get('/credentials/:id/status', async (req, res) => {
   try {
-    // Access credentials module directly from the agent's modules
-    const credentials = agents.faber.agent.modules.credentials
-    
-    if (!credentials) {
-      return res.status(500).json({ error: 'Credentials module not found' })
-    }
-
-    const record = await credentials.findById(req.params.id)
+    // Access credentials directly on agent
+    const record = await agents.faber.agent.credentials.findById(req.params.id)
     res.json({ 
       id: record.id, 
       state: record.state,
@@ -335,20 +264,14 @@ app.get('/proof/:id/status', async (req, res) => {
   try {
     const id = req.params.id
     
-    // Access proofs module directly from the agent's modules
-    const proofs = agents.faber.agent.modules.proofs
-    
-    if (!proofs) {
-      return res.status(500).json({ error: 'Proofs module not found' })
-    }
-
-    const record = await proofs.findById(id)
+    // Access proofs directly on agent
+    const record = await agents.faber.agent.proofs.findById(id)
     let revealedAttributes = undefined
 
     if (record.state === 'done') {
       try {
         // Get the format data
-        const formatData = await proofs.getFormatData(id)
+        const formatData = await agents.faber.agent.proofs.getFormatData(id)
         revealedAttributes = formatData.presentation?.anoncreds?.requested_proof?.revealed_attrs || {}
       } catch (formatError) {
         console.warn('Could not get format data:', formatError)
@@ -396,6 +319,7 @@ app.get('/health', async (req, res) => {
     res.json({
       status: 'healthy',
       framework: 'Credo',
+      version: '0.5.15',
       agents: {
         faber: faberStatus,
         alice: aliceStatus,
