@@ -180,7 +180,7 @@ app.post('/credentials/issue', async (req, res) => {
       record = await agent.issueAnonCredsCredential({ waitForAcceptance })
     } else if (type === 'jsonld') {
       if (!agent.issuerId) {
-        return res.status(400).json({ error: 'Please create a DID first' })
+        return res.status(400).json({ error: 'Please create a W3C DID first using /agent/create-did with type: "w3c"' })
       }
       record = await agent.issueJsonLdCredential({ waitForAcceptance })
     } else {
@@ -213,11 +213,24 @@ app.get('/credentials/:id/status', async (req, res) => {
   try {
     // Access credentials directly on agent
     const record = await agents.faber.agent.credentials.findById(req.params.id)
+    
+    // For JSON-LD credentials, try to get the actual credential
+    let credential = undefined
+    if (record.state === 'done') {
+      try {
+        const formatData = await agents.faber.agent.credentials.getFormatData(record.id)
+        credential = formatData.credential?.jsonld
+      } catch (error) {
+        console.warn('Could not get credential data:', error)
+      }
+    }
+    
     res.json({ 
       id: record.id, 
       state: record.state,
       protocolVersion: record.protocolVersion,
-      connectionId: record.connectionId 
+      connectionId: record.connectionId,
+      ...(credential && { credential })
     })
   } catch (error) {
     console.error('Error getting credential status:', error)
@@ -238,7 +251,7 @@ app.post('/proof/request', async (req, res) => {
       record = await agents.faber.sendAnonCredsProofRequest({ waitForPresentation })
     } else if (type === 'jsonld') {
       if (!agents.faber.issuerId) {
-        return res.status(400).json({ error: 'Please create a DID first' })
+        return res.status(400).json({ error: 'Please create a W3C DID first using /agent/create-did with type: "w3c"' })
       }
       record = await agents.faber.sendJsonLdProofRequest({ waitForPresentation })
     } else {
@@ -278,12 +291,18 @@ app.get('/proof/:id/status', async (req, res) => {
     // Access proofs directly on agent
     const record = await agents.faber.agent.proofs.findById(id)
     let revealedAttributes = undefined
+    let presentation = undefined
 
     if (record.state === 'done') {
       try {
         // Get the format data
         const formatData = await agents.faber.agent.proofs.getFormatData(id)
-        revealedAttributes = formatData.presentation?.anoncreds?.requested_proof?.revealed_attrs || {}
+        
+        // For AnonCreds
+        revealedAttributes = formatData.presentation?.anoncreds?.requested_proof?.revealed_attrs || undefined
+        
+        // For JSON-LD
+        presentation = formatData.presentation?.jsonld || undefined
       } catch (formatError) {
         console.warn('Could not get format data:', formatError)
       }
@@ -295,6 +314,7 @@ app.get('/proof/:id/status', async (req, res) => {
       protocolVersion: record.protocolVersion,
       connectionId: record.connectionId,
       ...(revealedAttributes !== undefined && { revealedAttributes }),
+      ...(presentation !== undefined && { presentation }),
     })
   } catch (error) {
     console.error('Error getting proof status:', error)
@@ -367,14 +387,14 @@ setupAgents()
       console.log('🚀 Multi-Agent Credo API running at http://localhost:' + PORT)
       console.log('📋 Available endpoints:')
       console.log('  GET  /status - Agent status')
-      console.log('  POST /agent/create-did - Create DID')
+      console.log('  POST /agent/create-did - Create DID ("anoncreds" or "w3c")')
       console.log('  POST /connections/invite - Create invitation')
       console.log('  POST /connections/accept - Accept invitation')
-      console.log('  POST /credentials/register-schema - Register schema')
-      console.log('  POST /credentials/register-creddef - Register credential definition')
-      console.log('  POST /credentials/issue - Issue credential')
+      console.log('  POST /credentials/register-schema - Register schema (AnonCreds only)')
+      console.log('  POST /credentials/register-creddef - Register credential definition (AnonCreds only)')
+      console.log('  POST /credentials/issue - Issue credential ("anoncreds" or "jsonld")')
       console.log('  POST /credentials/accept - Accept credentials')
-      console.log('  POST /proof/request - Request proof')
+      console.log('  POST /proof/request - Request proof ("anoncreds" or "jsonld")')
       console.log('  POST /proof/accept - Accept proof requests')
       console.log('  GET  /health - Health check')
     })
