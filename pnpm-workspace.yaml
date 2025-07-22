@@ -3,3 +3,4 @@ packages:
   - 'demo'
   - 'demo-openid'
   - 'samples/*'
+  - 'multi-agent-api'
