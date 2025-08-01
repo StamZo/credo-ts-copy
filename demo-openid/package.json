@@ -21,7 +21,7 @@
     "@koa/bodyparser": "^5.1.1",
     "@openwallet-foundation/askar-nodejs": "catalog:",
     "express": "catalog:",
-    "inquirer": "^8.2.5",
+    "inquirer": "^12.9.0",
     "jose": "^5.10.0",
     "oidc-provider": "^8.8.1"
   },
