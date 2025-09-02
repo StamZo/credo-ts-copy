@@ -44,7 +44,7 @@
     "@sd-jwt/present": "^0.10.0",
     "@sd-jwt/sd-jwt-vc": "^0.10.0",
     "@sd-jwt/types": "^0.10.0",
-    "@sd-jwt/utils": "^0.10.0",
+    "@sd-jwt/utils": "^0.15.0",
     "@sphereon/pex-models": "catalog:",
     "@sphereon/ssi-types": "0.33.0",
     "@stablelib/ed25519": "catalog:",
