@@ -4,6 +4,84 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@animo-id/pex':
+      specifier: ^6.1.0
+      version: 6.1.0
+    '@astronautlabs/jsonpath':
+      specifier: ^1.1.2
+      version: 1.1.2
+    '@hyperledger/anoncreds-nodejs':
+      specifier: ^0.3.1
+      version: 0.3.1
+    '@hyperledger/anoncreds-shared':
+      specifier: ^0.3.1
+      version: 0.3.1
+    '@hyperledger/indy-vdr-nodejs':
+      specifier: ^0.2.2
+      version: 0.2.2
+    '@hyperledger/indy-vdr-shared':
+      specifier: ^0.2.2
+      version: 0.2.2
+    '@openwallet-foundation/askar-nodejs':
+      specifier: ^0.3.2
+      version: 0.3.2
+    '@openwallet-foundation/askar-shared':
+      specifier: ^0.3.2
+      version: 0.3.2
+    '@sphereon/pex-models':
+      specifier: ^2.3.2
+      version: 2.3.2
+    '@stablelib/ed25519':
+      specifier: ^1.0.3
+      version: 1.0.3
+    '@types/express':
+      specifier: ^4.17.23
+      version: 4.17.23
+    '@types/node':
+      specifier: ^20.19.0
+      version: 20.19.0
+    '@types/ws':
+      specifier: ^8.18.1
+      version: 8.18.1
+    class-transformer:
+      specifier: 0.5.1
+      version: 0.5.1
+    class-validator:
+      specifier: 0.14.2
+      version: 0.14.2
+    express:
+      specifier: ^4.21.2
+      version: 4.21.2
+    nock:
+      specifier: ^14.0.5
+      version: 14.0.5
+    reflect-metadata:
+      specifier: ^0.2.2
+      version: 0.2.2
+    rimraf:
+      specifier: ^6.0.1
+      version: 6.0.1
+    rxjs:
+      specifier: ^7.8.2
+      version: 7.8.2
+    ts-node:
+      specifier: ^10.9.2
+      version: 10.9.2
+    tsyringe:
+      specifier: ^4.10.0
+      version: 4.10.0
+    typescript:
+      specifier: ~5.8.3
+      version: 5.8.3
+    ws:
+      specifier: ^8.18.2
+      version: 8.18.2
+    zod:
+      specifier: ^3.25.56
+      version: 3.25.56
+
 overrides:
   undici: ^6.20.1
 
@@ -218,31 +296,27 @@ importers:
 
   multi-agent-api:
     dependencies:
-      ethers:
-        specifier: ^6.8.1
-        version: 6.14.4
-      express:
-        specifier: ^4.18.2
-        version: 4.21.2
-    devDependencies:
       '@credo-ts/anoncreds':
-        specifier: ^0.5.15
-        version: 0.5.15(@hyperledger/anoncreds-shared@0.3.1)(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
+        specifier: workspace:*
+        version: link:../packages/anoncreds
       '@credo-ts/askar':
-        specifier: ^0.5.15
-        version: 0.5.15(@hyperledger/aries-askar-shared@0.2.3)(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
+        specifier: 'workspace:'
+        version: link:../packages/askar
       '@credo-ts/core':
-        specifier: ^0.5.15
-        version: 0.5.15(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
+        specifier: workspace:*
+        version: link:../packages/core
+      '@credo-ts/didcomm':
+        specifier: workspace:*
+        version: link:../packages/didcomm
       '@credo-ts/indy-besu-vdr':
         specifier: workspace:*
         version: link:../packages/indy-besu-vdr
       '@credo-ts/indy-vdr':
-        specifier: ^0.5.15
-        version: 0.5.15(@hyperledger/anoncreds-shared@0.3.1)(@hyperledger/indy-vdr-shared@0.2.2)(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
+        specifier: workspace:*
+        version: link:../packages/indy-vdr
       '@credo-ts/node':
-        specifier: ^0.5.15
-        version: 0.5.15(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
+        specifier: workspace:*
+        version: link:../packages/node
       '@hyperledger/anoncreds-nodejs':
         specifier: ^0.2.2
         version: 0.2.2
@@ -252,12 +326,28 @@ importers:
       '@hyperledger/indy-vdr-nodejs':
         specifier: ^0.2.2
         version: 0.2.2
+      '@openwallet-foundation/askar-shared':
+        specifier: ^0.3.2
+        version: 0.3.2
+      ethers:
+        specifier: ^6.8.1
+        version: 6.14.4
+      express:
+        specifier: ^4.18.2
+        version: 4.21.2
+    devDependencies:
       '@types/express':
         specifier: ^4.17.17
         version: 4.17.23
+      '@types/jest':
+        specifier: ^29.5.0
+        version: 29.5.14
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.0
+      jest:
+        specifier: ^29.5.0
+        version: 29.7.0(@types/node@20.19.0)(ts-node@10.9.2(@types/node@20.19.0)(typescript@5.8.3))
       ts-node:
         specifier: ^10.4.0
         version: 10.9.2(@types/node@20.19.0)(typescript@5.8.3)
@@ -278,7 +368,7 @@ importers:
         version: 0.5.1
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -312,7 +402,7 @@ importers:
         version: 0.5.1
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
       reflect-metadata:
         specifier: 'catalog:'
         version: 0.2.2
@@ -346,7 +436,7 @@ importers:
         version: 0.5.1
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -410,7 +500,7 @@ importers:
         version: 0.5.1
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -513,7 +603,7 @@ importers:
         version: 0.5.1
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
       dcql:
         specifier: ^0.3.0
         version: 0.3.0(typescript@5.8.3)
@@ -589,7 +679,7 @@ importers:
         version: 0.5.1
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
       luxon:
         specifier: ^3.5.0
         version: 3.6.1
@@ -632,7 +722,7 @@ importers:
         version: 0.5.1
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
     devDependencies:
       '@credo-ts/node':
         specifier: workspace:*
@@ -669,7 +759,7 @@ importers:
         version: 1.8.0
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
       ethers:
         specifier: ^6.8.1
         version: 6.14.4
@@ -866,7 +956,7 @@ importers:
         version: 0.5.1
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -975,7 +1065,7 @@ importers:
         version: 0.3.2
       class-validator:
         specifier: 'catalog:'
-        version: 0.14.1
+        version: 0.14.2
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -1050,15 +1140,8 @@ packages:
       react: '*'
       react-native: '*'
 
-  '@animo-id/mdoc@0.2.38':
-    resolution: {integrity: sha512-98KQ0jvwTYsFOffTGvvHXBDo23b5xmhYjPiMIX6e807I6iS4fZZ9ypfBySdA5IiGUvXELKqEv27AUaayQa/9bg==}
-
   '@animo-id/mdoc@0.5.2':
     resolution: {integrity: sha512-EQVsNOOeXFfBaEHkiKoh24jbSEQ1MORB/kUu0rnNrAEETpY5GK/H9iWevYFdmNDIqQTIEJlkU7S+sIj3pe66eA==}
-
-  '@animo-id/pex@4.1.1-alpha.0':
-    resolution: {integrity: sha512-6ieHhH9UE9DLFOJegMCabG3qUFlQk4TLhBefxInpyjx2Ly6kuloVMScJYcnQTs/E6nuHGMd7ebUaKy4+0+ZbOA==}
-    engines: {node: '>=18'}
 
   '@animo-id/pex@6.1.0':
     resolution: {integrity: sha512-qlfbTAASA3B8DFwKV9nIe6ZSTg/UkgyQ2fUKkyO/D+sNPDgAP33JXtUmTG/uPDRJrhxhodSpwQ6I9seAlSTmUA==}
@@ -1961,31 +2044,6 @@ packages:
   '@cosmjs/utils@0.33.1':
     resolution: {integrity: sha512-UnLHDY6KMmC+UXf3Ufyh+onE19xzEXjT4VZ504Acmk4PXxqyvG4cCPprlKUFnGUX7f0z8Or9MAOHXBx41uHBcg==}
 
-  '@credo-ts/anoncreds@0.5.15':
-    resolution: {integrity: sha512-b9LkFl/icptDV69QO/DJKfyP7oVuRUlj57xxnMYuJyPnFtfXwkGJr7Fdb62Izi8eZXAOIOtnsXt6P4KEV2cnYA==}
-    peerDependencies:
-      '@hyperledger/anoncreds-shared': ^0.2.2
-
-  '@credo-ts/askar@0.5.15':
-    resolution: {integrity: sha512-eSoiQQEEntTZHsw87BIlafGKash5HAP+34VnVl4T9xKs59KNN7BvpdG6/6lqhS0G8DxeN998KuW4D1CEWh7AhA==}
-    peerDependencies:
-      '@animo-id/expo-secure-environment': ^0.0.1-alpha.0
-      '@hyperledger/aries-askar-shared': ^0.2.3
-    peerDependenciesMeta:
-      '@animo-id/expo-secure-environment':
-        optional: true
-
-  '@credo-ts/core@0.5.15':
-    resolution: {integrity: sha512-3BYjncNY1Y6JDtxnbza1WVID8OoPgIZEno3z2F8a11xvsemsZCyy9vpyVgQi/Dz3P6/6JLZ/mnJAUwGKFZPnqA==}
-
-  '@credo-ts/indy-vdr@0.5.15':
-    resolution: {integrity: sha512-+ZANXK+7WW5fTvRhQCCHevihHwApmk69PniJ8dwdtGAmGZbswpYmZfHFJYExsA8Absk2dOPPzMKMdDQOkwagBw==}
-    peerDependencies:
-      '@hyperledger/indy-vdr-shared': ^0.2.2
-
-  '@credo-ts/node@0.5.15':
-    resolution: {integrity: sha512-oLGwWGX3TKzZakfps9Dgb7UGJWsFaW7WpQ1n4gIYg54L3Ew0K6e/A1McJ/atOS8RhU3YS2/DVhs8uBY5xqbfuQ==}
-
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
@@ -2473,6 +2531,7 @@ packages:
   '@koa/router@13.1.0':
     resolution: {integrity: sha512-mNVu1nvkpSd8Q8gMebGbCkDWJ51ODetrFvLKYusej+V0ByD4btqHYnPIzTBLXnQMVUlm/oxVwqmWBY3zQfZilw==}
     engines: {node: '>= 18'}
+    deprecated: Please upgrade to v13.1.1+ per <https://github.com/koajs/router/pull/181>
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -2704,10 +2763,6 @@ packages:
     resolution: {integrity: sha512-EuFsIHP76fwNi97dGcz2jdEenHL/AkDGcqrEA00k82Uw0HP/hvbAfB+yyPxYrd3dVaxe5PWSKvDkgDK6kKk+6Q==}
     engines: {node: '>=18'}
 
-  '@sd-jwt/core@0.7.2':
-    resolution: {integrity: sha512-vix1GplUFc1A9H42r/yXkg7cKYthggyqZEwlFdsBbn4xdZNE+AHVF4N7kPa1pPxipwN3UIHd4XnQ5MJV15mhsQ==}
-    engines: {node: '>=18'}
-
   '@sd-jwt/decode@0.10.0':
     resolution: {integrity: sha512-djNWMWpF1kUVh1fM/lRrmoQtTaJy8J0mS0bu96XPL5Jea5ov4klxOtSvuYmPFFcqLpxyrLOIwcbqmVQ20Mdzpg==}
     engines: {node: '>=18'}
@@ -2724,10 +2779,6 @@ packages:
     resolution: {integrity: sha512-TVLLQ7qjZKKEXODXUAxoWvJmnH3bSNXsttp0hxVP/qv42Rk7OFKIjepkzy6lh+RQRWw3NK/rHiz95/Fz1m4xBQ==}
     engines: {node: '>=18'}
 
-  '@sd-jwt/jwt-status-list@0.7.2':
-    resolution: {integrity: sha512-o/Mg/Zg21poFsPXuxtPD9sdXq2b/0L+rb9gxU2k1rp1aT+DWmqD0k8v0Ttr2tlMc8l1xXQNA8FLXbL1AdLRmbQ==}
-    engines: {node: '>=18'}
-
   '@sd-jwt/present@0.10.0':
     resolution: {integrity: sha512-ITkyXAfdPOnfWlPgGkHpN1JxaOCC/A8Oid0CUY25AsGuwkSCw9rd+B0nwG5KBwmf1RaOG75FkvwmSCHXBlHgUg==}
     engines: {node: '>=18'}
@@ -2738,10 +2789,6 @@ packages:
 
   '@sd-jwt/sd-jwt-vc@0.10.0':
     resolution: {integrity: sha512-418TX436dBK7FnwsLJXUXnTQByZQOonCuJ4vKyrOJ27mZXxkiFiLSaUojqoFerSw5u29nwrcRRJzd1NLdLWqkQ==}
-    engines: {node: '>=18'}
-
-  '@sd-jwt/sd-jwt-vc@0.7.2':
-    resolution: {integrity: sha512-rryYmnoJHRSNqHcrs0Atta+bfJzU2yT7mYumR2D4lTfxJKWZd0OHHFq57uZSEm/wXPI6uytUJXYbEboCqLUAtw==}
     engines: {node: '>=18'}
 
   '@sd-jwt/types@0.10.0':
@@ -2788,18 +2835,11 @@ packages:
     resolution: {integrity: sha512-kQpk267uxB19X3X2T1mvNMjyvIEonpNSHrMlK5ZaBU6aZxw7wPbpgKJOjHN3+/GPVpXgAV9soVT2oyHpLkLtyw==}
     engines: {node: '>= 8'}
 
-  '@sphereon/kmp-mdl-mdoc@0.2.0-SNAPSHOT.22':
-    resolution: {integrity: sha512-uAZZExVy+ug9JLircejWa5eLtAZ7bnBP6xb7DO2+86LRsHNLh2k2jMWJYxp+iWtGHTsh6RYsZl14ScQLvjiQ/A==}
-    bundledDependencies: []
-
   '@sphereon/kmp-mdoc-core@0.2.0-SNAPSHOT.26':
     resolution: {integrity: sha512-QXJ6R8ENiZV2rPMbn06cw5JKwqUYN1kzVRbYfONqE1PEXx1noQ4md7uxr2zSczi0ubKkNcbyYDNtIMTZIhGzmQ==}
 
   '@sphereon/pex-models@2.3.2':
     resolution: {integrity: sha512-foFxfLkRwcn/MOp/eht46Q7wsvpQGlO7aowowIIb5Tz9u97kYZ2kz6K2h2ODxWuv5CRA7Q0MY8XUBGE2lfOhOQ==}
-
-  '@sphereon/ssi-types@0.30.2-next.135':
-    resolution: {integrity: sha512-YLQfFMPUlOJUxHbOS9v01nG3cgLwTk3d95/rTnOmEQx9kXgXjoXdvt7D0uGcMRL3RHeQ9biT/jWY//mDvCirVQ==}
 
   '@sphereon/ssi-types@0.33.0':
     resolution: {integrity: sha512-OQnWLKZQU6lHlMw3JS5308q5Kctv1eT/NNQthGNXETarsgJFiD711pWMOJvi0p5kLpU8N1e7/okaH3mXsVAW0A==}
@@ -3513,8 +3553,8 @@ packages:
   class-transformer@0.5.1:
     resolution: {integrity: sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw==}
 
-  class-validator@0.14.1:
-    resolution: {integrity: sha512-2VEG9JICxIqTpoK1eMzZqaV+u/EiwEJkMGzTrZf6sU/fwsnOITVgYJ8yojSy6CaXtO9V0Cc6ZQZ8h8m4UBuLwQ==}
+  class-validator@0.14.2:
+    resolution: {integrity: sha512-3kMVRF2io8N8pY1IFIXlho9r8IPUUIfHe2hYVtiebvAzU2XeQFXTv+XI4WX+TnXmtwXMDcjngcpkiPM0O9PvLw==}
 
   clear@0.1.0:
     resolution: {integrity: sha512-qMjRnoL+JDPJHeLePZJuao6+8orzHMGP04A8CdwCNsKhRbOnKRjefxONR7bwILT3MHecxKBjHkKL/tkZ8r4Uzw==}
@@ -5841,9 +5881,6 @@ packages:
   ref-struct-di@1.1.1:
     resolution: {integrity: sha512-2Xyn/0Qgz89VT+++WP0sTosdm9oeowLP23wRJYhG4BFdMUrLj3jhwHZNEytYNYgtPKLNTP3KJX4HEgBvM1/Y2g==}
 
-  reflect-metadata@0.1.14:
-    resolution: {integrity: sha512-ZhYeb6nRaXCfhnndflDK8qI6ZQ/YcWZCISRAWICW9XYqMUwjZM9Z0DveWX/ABN01oxSHwVxKQmxeYZSsm0jh5A==}
-
   reflect-metadata@0.2.2:
     resolution: {integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==}
 
@@ -6193,10 +6230,12 @@ packages:
   superagent@10.2.1:
     resolution: {integrity: sha512-O+PCv11lgTNJUzy49teNAWLjBZfc+A1enOwTpLlH6/rsvKcTwcdTT8m9azGkVqM7HBl5jpyZ7KTPhHweokBcdg==}
     engines: {node: '>=14.18.0'}
+    deprecated: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
 
   supertest@7.1.1:
     resolution: {integrity: sha512-aI59HBTlG9e2wTjxGJV+DygfNLgnWbGdZxiA/sgrnNNikIW8lbDvCtF6RnhZoJ82nU7qv7ZLjrvWqCEm52fAmw==}
     engines: {node: '>=14.18.0'}
+    deprecated: Please upgrade to supertest v7.1.3+, see release notes at https://github.com/forwardemail/supertest/releases/tag/v7.1.3 - maintenance is supported by Forward Email @ https://forwardemail.net
 
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
@@ -6476,10 +6515,6 @@ packages:
     resolution: {integrity: sha512-DPSke0pXhTZgoF/d+WSt2QaKMCFSfx7QegxEWT+JOuHF5aWrKEn0G+ztjuJg/gG8/ItK+rbPCD/yNv8yyih6Cg==}
     hasBin: true
 
-  uuid@9.0.1:
-    resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
-    hasBin: true
-
   v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
 
@@ -6734,29 +6769,9 @@ snapshots:
       react: 19.1.0
       react-native: 0.79.3(@babel/core@7.27.4)(react@19.1.0)
 
-  '@animo-id/mdoc@0.2.38':
-    dependencies:
-      compare-versions: 6.1.1
-
   '@animo-id/mdoc@0.5.2':
     dependencies:
       compare-versions: 6.1.1
-
-  '@animo-id/pex@4.1.1-alpha.0':
-    dependencies:
-      '@astronautlabs/jsonpath': 1.1.2
-      '@sd-jwt/decode': 0.7.2
-      '@sd-jwt/present': 0.7.2
-      '@sd-jwt/types': 0.7.2
-      '@sphereon/pex-models': 2.3.2
-      '@sphereon/ssi-types': 0.30.2-next.135
-      ajv: 8.17.1
-      ajv-formats: 2.1.1(ajv@8.17.1)
-      jwt-decode: 3.1.2
-      nanoid: 3.3.11
-      uint8arrays: 3.1.1
-    transitivePeerDependencies:
-      - supports-color
 
   '@animo-id/pex@6.1.0':
     dependencies:
@@ -8081,127 +8096,6 @@ snapshots:
 
   '@cosmjs/utils@0.33.1': {}
 
-  '@credo-ts/anoncreds@0.5.15(@hyperledger/anoncreds-shared@0.3.1)(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)':
-    dependencies:
-      '@astronautlabs/jsonpath': 1.1.2
-      '@credo-ts/core': 0.5.15(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
-      '@hyperledger/anoncreds-shared': 0.3.1
-      '@sphereon/pex-models': 2.3.2
-      big-integer: 1.6.52
-      bn.js: 5.2.2
-      class-transformer: 0.5.1
-      class-validator: 0.14.1
-      reflect-metadata: 0.1.14
-    transitivePeerDependencies:
-      - domexception
-      - encoding
-      - expo
-      - react-native
-      - supports-color
-      - web-streams-polyfill
-
-  '@credo-ts/askar@0.5.15(@hyperledger/aries-askar-shared@0.2.3)(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)':
-    dependencies:
-      '@credo-ts/core': 0.5.15(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
-      '@hyperledger/aries-askar-shared': 0.2.3
-      bn.js: 5.2.2
-      class-transformer: 0.5.1
-      class-validator: 0.14.1
-      rxjs: 7.8.2
-      tsyringe: 4.10.0
-    transitivePeerDependencies:
-      - domexception
-      - encoding
-      - expo
-      - react-native
-      - supports-color
-      - web-streams-polyfill
-
-  '@credo-ts/core@0.5.15(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)':
-    dependencies:
-      '@animo-id/mdoc': 0.2.38
-      '@animo-id/pex': 4.1.1-alpha.0
-      '@astronautlabs/jsonpath': 1.1.2
-      '@digitalcredentials/jsonld': 6.0.0(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
-      '@digitalcredentials/jsonld-signatures': 9.4.0(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
-      '@digitalcredentials/vc': 6.0.1(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
-      '@multiformats/base-x': 4.0.1
-      '@noble/curves': 1.9.2
-      '@noble/hashes': 1.8.0
-      '@peculiar/asn1-ecc': 2.3.15
-      '@peculiar/asn1-schema': 2.3.15
-      '@peculiar/asn1-x509': 2.3.15
-      '@peculiar/x509': 1.12.3
-      '@sd-jwt/core': 0.7.2
-      '@sd-jwt/decode': 0.7.2
-      '@sd-jwt/jwt-status-list': 0.7.2
-      '@sd-jwt/sd-jwt-vc': 0.7.2
-      '@sd-jwt/types': 0.7.2
-      '@sd-jwt/utils': 0.7.2
-      '@sphereon/pex-models': 2.3.2
-      '@sphereon/ssi-types': 0.30.2-next.135
-      '@stablelib/ed25519': 1.0.3
-      '@types/ws': 8.18.1
-      abort-controller: 3.0.0
-      big-integer: 1.6.52
-      borc: 3.0.0
-      buffer: 6.0.3
-      class-transformer: 0.5.1
-      class-validator: 0.14.1
-      did-resolver: 4.1.0
-      lru_map: 0.4.1
-      luxon: 3.6.1
-      make-error: 1.3.6
-      object-inspect: 1.13.4
-      query-string: 7.1.3
-      reflect-metadata: 0.1.14
-      rxjs: 7.8.2
-      tsyringe: 4.10.0
-      uuid: 9.0.1
-      varint: 6.0.0
-      web-did-resolver: 2.0.30
-      webcrypto-core: 1.8.1
-    transitivePeerDependencies:
-      - domexception
-      - encoding
-      - expo
-      - react-native
-      - supports-color
-      - web-streams-polyfill
-
-  '@credo-ts/indy-vdr@0.5.15(@hyperledger/anoncreds-shared@0.3.1)(@hyperledger/indy-vdr-shared@0.2.2)(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)':
-    dependencies:
-      '@credo-ts/anoncreds': 0.5.15(@hyperledger/anoncreds-shared@0.3.1)(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
-      '@credo-ts/core': 0.5.15(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
-      '@hyperledger/indy-vdr-shared': 0.2.2
-    transitivePeerDependencies:
-      - '@hyperledger/anoncreds-shared'
-      - domexception
-      - encoding
-      - expo
-      - react-native
-      - supports-color
-      - web-streams-polyfill
-
-  '@credo-ts/node@0.5.15(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)':
-    dependencies:
-      '@2060.io/ffi-napi': 4.0.9
-      '@2060.io/ref-napi': 3.0.6
-      '@credo-ts/core': 0.5.15(expo@53.0.11(@babel/core@7.27.4)(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(react@19.1.0))(react-native@0.79.3(@babel/core@7.27.4)(react@19.1.0))(web-streams-polyfill@3.3.3)
-      '@types/express': 4.17.23
-      express: 4.21.2
-      rxjs: 7.8.2
-      ws: 8.18.2
-    transitivePeerDependencies:
-      - bufferutil
-      - domexception
-      - encoding
-      - expo
-      - react-native
-      - supports-color
-      - utf-8-validate
-      - web-streams-polyfill
-
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -9407,13 +9301,6 @@ snapshots:
       '@sd-jwt/types': 0.10.0
       '@sd-jwt/utils': 0.10.0
 
-  '@sd-jwt/core@0.7.2':
-    dependencies:
-      '@sd-jwt/decode': 0.7.2
-      '@sd-jwt/present': 0.7.2
-      '@sd-jwt/types': 0.7.2
-      '@sd-jwt/utils': 0.7.2
-
   '@sd-jwt/decode@0.10.0':
     dependencies:
       '@sd-jwt/types': 0.10.0
@@ -9432,12 +9319,6 @@ snapshots:
   '@sd-jwt/jwt-status-list@0.10.0':
     dependencies:
       '@sd-jwt/types': 0.10.0
-      base64url: 3.0.1
-      pako: 2.1.0
-
-  '@sd-jwt/jwt-status-list@0.7.2':
-    dependencies:
-      '@sd-jwt/types': 0.7.2
       base64url: 3.0.1
       pako: 2.1.0
 
@@ -9460,12 +9341,6 @@ snapshots:
       '@sd-jwt/utils': 0.10.0
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
-
-  '@sd-jwt/sd-jwt-vc@0.7.2':
-    dependencies:
-      '@sd-jwt/core': 0.7.2
-      '@sd-jwt/jwt-status-list': 0.7.2
-      '@sd-jwt/utils': 0.7.2
 
   '@sd-jwt/types@0.10.0': {}
 
@@ -9504,12 +9379,6 @@ snapshots:
 
   '@sovpro/delimited-stream@1.1.0': {}
 
-  '@sphereon/kmp-mdl-mdoc@0.2.0-SNAPSHOT.22':
-    dependencies:
-      '@js-joda/core': 5.6.3
-      '@js-joda/timezone': 2.3.0(@js-joda/core@5.6.3)
-      format-util: 1.0.5
-
   '@sphereon/kmp-mdoc-core@0.2.0-SNAPSHOT.26':
     dependencies:
       '@js-joda/core': 5.6.3
@@ -9517,16 +9386,6 @@ snapshots:
       format-util: 1.0.5
 
   '@sphereon/pex-models@2.3.2': {}
-
-  '@sphereon/ssi-types@0.30.2-next.135':
-    dependencies:
-      '@sd-jwt/decode': 0.7.2
-      '@sphereon/kmp-mdl-mdoc': 0.2.0-SNAPSHOT.22
-      debug: 4.4.1
-      events: 3.3.0
-      jwt-decode: 3.1.2
-    transitivePeerDependencies:
-      - supports-color
 
   '@sphereon/ssi-types@0.33.0':
     dependencies:
@@ -10384,7 +10243,7 @@ snapshots:
 
   class-transformer@0.5.1: {}
 
-  class-validator@0.14.1:
+  class-validator@0.14.2:
     dependencies:
       '@types/validator': 13.15.1
       libphonenumber-js: 1.12.9
@@ -13126,8 +12985,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  reflect-metadata@0.1.14: {}
-
   reflect-metadata@0.2.2: {}
 
   regenerate-unicode-properties@10.2.0:
@@ -13753,8 +13610,6 @@ snapshots:
   uuid@11.1.0: {}
 
   uuid@7.0.3: {}
-
-  uuid@9.0.1: {}
 
   v8-compile-cache-lib@3.0.1: {}
 
