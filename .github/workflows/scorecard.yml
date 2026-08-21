@@ -1,4 +1,4 @@
-name: OpenSSF Scorecard supply-chain security
+name: OpenSSF  Scorecard supply-chain security
 on:
   schedule:
     - cron: '00 08 * * 5'
